@@ -1,0 +1,649 @@
+import { soundManager } from '../audio/SoundManager.js';
+import { SWIMMERS_DATA } from '../game/SwimmerData.js';
+
+/**
+ * 올림픽 중계 그래픽 및 배팅 UI 관리자 (UIManager)
+ * - 내기 참가자 이름 태깅
+ * - 올림픽 선수 소개 인트로 오버레이
+ * - 돌발 상황 스택 피드 (Multi-Incident Stack)
+ */
+export class UIManager {
+  constructor() {
+    this.callbacks = {};
+
+    // DOM 요소 캐싱
+    this.walletDisplay = document.getElementById('wallet-coins');
+    this.bettingScreen = document.getElementById('betting-screen');
+    this.introScreen = document.getElementById('intro-screen');
+    this.raceHud = document.getElementById('race-hud');
+    this.resultModal = document.getElementById('result-modal');
+    this.announcement = document.getElementById('race-announcement');
+    this.incidentStack = document.getElementById('incident-stack');
+    this.swimmerCardsContainer = document.getElementById('swimmer-cards');
+    this.leaderboardContainer = document.getElementById('race-leaderboard');
+    this.minimapTracksContainer = document.getElementById('minimap-lanes');
+    this.liveTimerDisplay = document.getElementById('live-timer');
+    this.betAmountInput = document.getElementById('bet-amount-input');
+    this.selectedSwimmerName = document.getElementById('selected-swimmer-name');
+    this.selectedSwimmerQuote = document.getElementById('selected-swimmer-quote');
+    this.potentialWinDisplay = document.getElementById('potential-win');
+
+    // 인트로 오버레이 요소들
+    this.introLaneTag = document.getElementById('intro-lane-tag');
+    this.introAvatar = document.getElementById('intro-avatar');
+    this.introName = document.getElementById('intro-name');
+    this.introAgeGender = document.getElementById('intro-age-gender');
+    this.introBettorBadge = document.getElementById('intro-bettor-badge');
+    this.introNickname = document.getElementById('intro-nickname');
+    this.introQuote = document.getElementById('intro-quote');
+
+    // 상단 빠른 내기 등록 바 컨테이너
+    this.bettorQuickContainer = document.getElementById('bettor-quick-inputs');
+    this.dockBettorInput = document.getElementById('dock-bettor-input');
+
+    this.currentSelectedLane = 4;
+  }
+
+  setCallbacks({ onSelectLane, onSetBetAmount, onSetBettorName, onStartRace, onNextIntro, onSkipIntro, onResetRace, onChangeCamera, onMuteToggle, onRefillCoins }) {
+    this.callbacks = { onSelectLane, onSetBetAmount, onSetBettorName, onStartRace, onNextIntro, onSkipIntro, onResetRace, onChangeCamera, onMuteToggle, onRefillCoins };
+    this.bindEvents();
+  }
+
+  bindEvents() {
+    const muteBtn = document.getElementById('btn-mute');
+    if (muteBtn) {
+      muteBtn.addEventListener('click', () => {
+        const isMuted = this.callbacks.onMuteToggle();
+        muteBtn.textContent = isMuted ? '🔇' : '🔊';
+      });
+    }
+
+    const refillBtn = document.getElementById('btn-refill');
+    if (refillBtn) {
+      refillBtn.addEventListener('click', () => {
+        if (this.callbacks.onRefillCoins) this.callbacks.onRefillCoins();
+      });
+    }
+
+    // 모바일 전체화면 (Fullscreen) 토글 버튼
+    const fsBtn = document.getElementById('btn-fullscreen');
+    if (fsBtn) {
+      fsBtn.addEventListener('click', () => {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen().catch(() => {});
+          fsBtn.textContent = '🗗';
+        } else {
+          document.exitFullscreen().catch(() => {});
+          fsBtn.textContent = '⛶';
+        }
+        soundManager.playClick();
+      });
+    }
+
+    // 모바일 가로 모드 토글 (PC/모바일 공용 시뮬레이터)
+    const mobileToggleBtn = document.getElementById('btn-toggle-mobile');
+    if (mobileToggleBtn) {
+      mobileToggleBtn.addEventListener('click', () => {
+        document.body.classList.toggle('mobile-landscape-mode');
+        const isActive = document.body.classList.contains('mobile-landscape-mode');
+        mobileToggleBtn.style.borderColor = isActive ? '#38bdf8' : '';
+        mobileToggleBtn.style.background = isActive ? 'rgba(56, 189, 248, 0.3)' : '';
+        soundManager.playClick();
+      });
+    }
+
+    // 모바일 가로 화면 자동 감지
+    const autoDetectMobile = () => {
+      const isLandscape = window.innerWidth > window.innerHeight;
+      const isMobileSize = (window.innerHeight <= 540) || (window.innerWidth <= 950 && isLandscape);
+      if (isMobileSize) {
+        document.body.classList.add('mobile-landscape-mode');
+      }
+    };
+    window.addEventListener('resize', autoDetectMobile);
+    window.addEventListener('orientationchange', autoDetectMobile);
+    autoDetectMobile();
+
+    // 세로 모드 안내 닫기 버튼
+    const dismissOriBtn = document.getElementById('btn-dismiss-orientation');
+    if (dismissOriBtn) {
+      dismissOriBtn.addEventListener('click', () => {
+        const overlay = document.getElementById('orientation-overlay');
+        if (overlay) overlay.style.display = 'none';
+        soundManager.playClick();
+      });
+    }
+
+    // 예시 이름 자동 채우기 버튼
+    const autoFillBtn = document.getElementById('btn-auto-fill-bettors');
+    if (autoFillBtn) {
+      autoFillBtn.addEventListener('click', () => {
+        const sampleNames = ["철수", "영희", "민수", "부장님", "과장님", "김대리", "박팀장", "막내인턴"];
+        for (let lane = 1; lane <= 8; lane++) {
+          const sample = sampleNames[lane - 1];
+          this.callbacks.onSetBettorName(lane, sample);
+          this.syncBettorInputs(lane, sample);
+        }
+        soundManager.playClick();
+      });
+    }
+
+    // 하단 독 내기 참가자 인풋 연동
+    if (this.dockBettorInput) {
+      this.dockBettorInput.addEventListener('input', (e) => {
+        const val = e.target.value;
+        this.callbacks.onSetBettorName(this.currentSelectedLane, val);
+        this.syncBettorInputs(this.currentSelectedLane, val);
+      });
+    }
+
+    // 카메라 전환 버튼
+    const camButtons = document.querySelectorAll('.cam-btn');
+    camButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        camButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const mode = btn.dataset.cam;
+        this.callbacks.onChangeCamera(mode);
+        soundManager.playClick();
+      });
+    });
+
+    // 배팅 금액 칩 버튼들
+    const chipButtons = document.querySelectorAll('.chip-btn');
+    chipButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const val = btn.dataset.val;
+        let current = parseInt(this.betAmountInput.value) || 1000;
+        let next = current;
+
+        if (val === 'half') {
+          next = Math.max(100, Math.floor(current / 2));
+        } else if (val === 'max') {
+          next = 999999;
+        } else {
+          next = current + parseInt(val);
+        }
+        this.callbacks.onSetBetAmount(next);
+      });
+    });
+
+    if (this.betAmountInput) {
+      this.betAmountInput.addEventListener('input', (e) => {
+        const val = parseInt(e.target.value) || 100;
+        this.callbacks.onSetBetAmount(val);
+      });
+    }
+
+    // 경기 시작 버튼
+    const startBtn = document.getElementById('btn-start-race');
+    if (startBtn) {
+      startBtn.addEventListener('click', () => {
+        this.callbacks.onStartRace();
+      });
+    }
+
+    // 인트로 스킵 버튼들 (상단 플로팅 바 & 하단 카드 도크)
+    const skipAllBtns = [
+      document.getElementById('btn-skip-intro'),
+      document.getElementById('btn-dock-skip')
+    ];
+    skipAllBtns.forEach(btn => {
+      if (btn) {
+        btn.addEventListener('click', () => {
+          if (this.callbacks.onSkipIntro) this.callbacks.onSkipIntro();
+        });
+      }
+    });
+
+    // 다음 선수 소개 버튼들 (상단 플로팅 바 & 하단 카드 도크)
+    const nextBtns = [
+      document.getElementById('btn-next-intro'),
+      document.getElementById('btn-dock-next')
+    ];
+    nextBtns.forEach(btn => {
+      if (btn) {
+        btn.addEventListener('click', () => {
+          if (this.callbacks.onNextIntro) this.callbacks.onNextIntro();
+        });
+      }
+    });
+
+    // 결과 모달 다음 경기 버튼
+    const nextRaceBtn = document.getElementById('btn-next-race');
+    if (nextRaceBtn) {
+      nextRaceBtn.addEventListener('click', () => {
+        this.callbacks.onResetRace();
+      });
+    }
+  }
+
+  setActiveCamButton(mode) {
+    const camButtons = document.querySelectorAll('.cam-btn');
+    camButtons.forEach(btn => {
+      if (btn.dataset.cam === mode) {
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
+      }
+    });
+  }
+
+  updateWallet(coins) {
+    if (this.walletDisplay) {
+      this.walletDisplay.textContent = coins.toLocaleString();
+    }
+  }
+
+  showBettingScreen(swimmers, selectedLane, betAmount) {
+    this.bettingScreen.classList.remove('hidden');
+    this.introScreen.classList.add('hidden');
+    this.raceHud.classList.add('hidden');
+    this.resultModal.classList.add('hidden');
+    if (this.incidentStack) this.incidentStack.innerHTML = '';
+
+    this.currentSelectedLane = selectedLane;
+    this.renderQuickBettorBar(swimmers);
+    this.renderSwimmerCards(swimmers, selectedLane);
+    this.updateBetAmount(betAmount);
+  }
+
+  // 상단 8인 빠른 내기 명단 등록 바 렌더링
+  renderQuickBettorBar(swimmers) {
+    if (!this.bettorQuickContainer) return;
+    this.bettorQuickContainer.innerHTML = '';
+
+    swimmers.forEach(s => {
+      const item = document.createElement('div');
+      item.className = 'registry-item';
+      item.innerHTML = `
+        <div class="reg-lane-label">
+          <span class="lane-tag-${s.lane}">L${s.lane} ${s.name}</span>
+        </div>
+        <input type="text" class="reg-lane-input" data-lane="${s.lane}" placeholder="이름 입력" value="${s.bettorName || ''}">
+      `;
+
+      const input = item.querySelector('.reg-lane-input');
+      input.addEventListener('input', (e) => {
+        const val = e.target.value;
+        this.callbacks.onSetBettorName(s.lane, val);
+        this.syncBettorInputs(s.lane, val);
+      });
+
+      this.bettorQuickContainer.appendChild(item);
+    });
+  }
+
+  // 상단 바, 카드, 하단 독 간의 내기 참가자 이름 양방향 동기화
+  syncBettorInputs(lane, val) {
+    // 1. 상단 빠른 등록 바 인풋 동기화
+    const quickInput = document.querySelector(`.reg-lane-input[data-lane="${lane}"]`);
+    if (quickInput && quickInput.value !== val) quickInput.value = val;
+
+    // 2. 카드 내부 인풋 동기화
+    const cardInput = document.querySelector(`.bettor-name-input[data-lane="${lane}"]`);
+    if (cardInput && cardInput.value !== val) cardInput.value = val;
+
+    // 3. 하단 독 인풋 동기화 (선택된 레인일 때)
+    if (this.currentSelectedLane === lane && this.dockBettorInput && this.dockBettorInput.value !== val) {
+      this.dockBettorInput.value = val;
+    }
+
+    // 4. 독 텍스트 갱신
+    const swimmer = SWIMMERS_DATA ? SWIMMERS_DATA.find(s => s.lane === lane) : null;
+    if (swimmer && this.currentSelectedLane === lane) {
+      swimmer.bettorName = val;
+      this.updateSelectedCardInfo(swimmer);
+    }
+  }
+
+  renderSwimmerCards(swimmers, selectedLane) {
+    this.swimmerCardsContainer.innerHTML = '';
+
+    swimmers.forEach(s => {
+      const card = document.createElement('div');
+      card.className = `swimmer-card ${s.lane === selectedLane ? 'selected' : ''}`;
+      card.dataset.lane = s.lane;
+      const laneColorClass = `lane-color-${s.lane}`;
+
+      card.innerHTML = `
+        <div class="card-header">
+          <span class="lane-badge ${laneColorClass}">LANE ${s.lane}</span>
+          <span class="odds-tag">1등 시 8.0x</span>
+        </div>
+        <div class="card-body">
+          <div class="swimmer-avatar">${s.flag}</div>
+          <div class="swimmer-info">
+            <h3 class="swimmer-name">${s.name} <span class="swimmer-age">${s.age}세 (${s.gender === 'male' ? '남' : '여'})</span></h3>
+            <p class="swimmer-nick">"${s.nickname}"</p>
+          </div>
+        </div>
+
+        <!-- 내기 건 사람 이름 태깅 인풋 -->
+        <div class="bettor-input-row" onclick="event.stopPropagation()">
+          <span class="bettor-label">🏷️ 내기 건 사람:</span>
+          <input type="text" class="bettor-name-input" data-lane="${s.lane}" placeholder="이름 입력 (예: 철수)" value="${s.bettorName || ''}">
+        </div>
+
+        <div class="fake-stats">
+          <div class="stat-row">
+            <span>속도</span>
+            <div class="stat-bar"><div class="stat-fill speed" style="width: ${s.fakeStats.speed}%"></div></div>
+            <span>${s.fakeStats.speed}</span>
+          </div>
+          <div class="stat-row">
+            <span>지구력</span>
+            <div class="stat-bar"><div class="stat-fill stamina" style="width: ${s.fakeStats.stamina}%"></div></div>
+            <span>${s.fakeStats.stamina}</span>
+          </div>
+          <div class="stat-row">
+            <span>멘탈</span>
+            <div class="stat-bar"><div class="stat-fill mental" style="width: ${s.fakeStats.mental}%"></div></div>
+            <span>${s.fakeStats.mental}</span>
+          </div>
+        </div>
+        <p class="swimmer-quote">"${s.quote}"</p>
+      `;
+
+      // 카드 클릭 시 레인 선택
+      card.addEventListener('click', () => {
+        this.callbacks.onSelectLane(s.lane);
+      });
+
+      // 내기 건 사람 이름 입력 이벤트
+      const bettorInput = card.querySelector('.bettor-name-input');
+      bettorInput.addEventListener('input', (e) => {
+        const val = e.target.value;
+        this.callbacks.onSetBettorName(s.lane, val);
+      });
+
+      this.swimmerCardsContainer.appendChild(card);
+    });
+
+    this.updateSelectedCardInfo(swimmers.find(s => s.lane === selectedLane));
+  }
+
+  setSelectedLane(lane) {
+    this.currentSelectedLane = lane;
+    const cards = document.querySelectorAll('.swimmer-card');
+    cards.forEach(c => {
+      c.classList.toggle('selected', parseInt(c.dataset.lane) === lane);
+    });
+    this.updatePotentialWin();
+  }
+
+  updateSelectedCardInfo(swimmer) {
+    if (!swimmer) return;
+    if (this.selectedSwimmerName) {
+      const bettorText = swimmer.bettorName ? ` [내기: ${swimmer.bettorName}]` : '';
+      this.selectedSwimmerName.textContent = `[${swimmer.lane}번 레인] ${swimmer.name}${bettorText} (${swimmer.nickname})`;
+    }
+    if (this.dockBettorInput && this.dockBettorInput.value !== (swimmer.bettorName || '')) {
+      this.dockBettorInput.value = swimmer.bettorName || '';
+    }
+    if (this.selectedSwimmerQuote) {
+      this.selectedSwimmerQuote.textContent = `"${swimmer.quote}"`;
+    }
+    this.updatePotentialWin();
+  }
+
+  updateBetAmount(amount) {
+    if (this.betAmountInput) {
+      this.betAmountInput.value = amount;
+    }
+    this.updatePotentialWin();
+  }
+
+  updatePotentialWin() {
+    const amount = parseInt(this.betAmountInput.value) || 1000;
+    const win1 = Math.round(amount * 8.0);
+    const win2 = Math.round(amount * 2.5);
+    const win3 = Math.round(amount * 1.5);
+
+    if (this.potentialWinDisplay) {
+      this.potentialWinDisplay.innerHTML = `
+        <span>1등 적중 시: <strong>+${win1.toLocaleString()}</strong> C (8배)</span>
+        <span class="sub-odds">2등: +${win2.toLocaleString()} (2.5x) | 3등: +${win3.toLocaleString()} (1.5x)</span>
+      `;
+    }
+  }
+
+  // --- 올림픽 선수 소개 인트로 오버레이 표시 ---
+  showIntroScreen(swimmer) {
+    this.bettingScreen.classList.add('hidden');
+    this.introScreen.classList.remove('hidden');
+    this.raceHud.classList.add('hidden');
+
+    if (this.introLaneTag) {
+      this.introLaneTag.textContent = `LANE ${swimmer.lane}`;
+      this.introLaneTag.className = `intro-lane-tag lane-color-${swimmer.lane}`;
+    }
+    if (this.introAvatar) this.introAvatar.textContent = swimmer.flag;
+    if (this.introName) this.introName.textContent = swimmer.name;
+    if (this.introAgeGender) {
+      this.introAgeGender.textContent = `${swimmer.age}세 (${swimmer.gender === 'male' ? '남' : '여'})`;
+    }
+    if (this.introBettorBadge) {
+      const bName = swimmer.bettorName || "지정 안 됨";
+      this.introBettorBadge.innerHTML = `🏷️ 내기 참가자: <strong>${bName}</strong>`;
+    }
+    if (this.introNickname) this.introNickname.textContent = `"${swimmer.nickname}"`;
+    if (this.introQuote) this.introQuote.textContent = `"${swimmer.quote}"`;
+  }
+
+  showRaceHUD() {
+    this.bettingScreen.classList.add('hidden');
+    this.introScreen.classList.add('hidden');
+    this.raceHud.classList.remove('hidden');
+    this.resultModal.classList.add('hidden');
+    this.buildMinimapLanes();
+  }
+
+  buildMinimapLanes() {
+    if (!this.minimapTracksContainer) return;
+    this.minimapTracksContainer.innerHTML = '';
+    for (let lane = 1; lane <= 8; lane++) {
+      const track = document.createElement('div');
+      track.className = 'minimap-track';
+      track.innerHTML = `
+        <span class="m-lane-num">${lane}</span>
+        <div class="m-lane-line">
+          <div class="m-dot dot-lane-${lane}" id="minimap-dot-${lane}"></div>
+        </div>
+      `;
+      this.minimapTracksContainer.appendChild(track);
+    }
+  }
+
+  showAnnouncement(text) {
+    if (this.announcement) {
+      this.announcement.textContent = text;
+      this.announcement.classList.remove('hidden');
+      this.announcement.classList.add('pop-anim');
+    }
+  }
+
+  hideAnnouncement() {
+    if (this.announcement) {
+      this.announcement.classList.add('hidden');
+      this.announcement.classList.remove('pop-anim');
+    }
+  }
+
+  // --- 돌발 상황 누적 피드 스택 (Multi-Incident Stack) ---
+  // 여러 돌발 상황이 겹쳐도 이전 알림이 사라지지 않고 차곡차곡 쌓임!
+  pushIncidentAlert(name, lane, incident, comment, bettorName = "") {
+    if (!this.incidentStack) return;
+
+    const bettorHtml = bettorName ? `<span class="feed-bettor">🏷️ 배터: ${bettorName}</span>` : '';
+
+    const alertCard = document.createElement('div');
+    alertCard.className = 'incident-feed-card slide-in-feed';
+    alertCard.style.cssText = 'width: 100% !important; max-width: 380px !important; box-sizing: border-box !important; margin: 0 0 0 auto !important; background: linear-gradient(135deg, rgba(153, 27, 27, 0.95) 0%, rgba(127, 29, 29, 0.95) 100%) !important; border: 1.5px solid #f87171 !important; border-radius: 12px !important; padding: 10px 16px !important; backdrop-filter: blur(12px) !important; box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4) !important; display: flex !important; align-items: center !important; gap: 14px !important;';
+    alertCard.innerHTML = `
+      <div class="feed-left">
+        <span class="feed-emoji">${incident.emoji}</span>
+      </div>
+      <div class="feed-content">
+        <div class="feed-header">
+          <span class="feed-lane-tag lane-color-${lane}">LANE ${lane}</span>
+          <strong class="feed-name">${name}</strong>
+          ${bettorHtml}
+          <span class="feed-incident-name">${incident.name}</span>
+        </div>
+        <p class="feed-comment">${comment}</p>
+      </div>
+    `;
+
+    this.incidentStack.appendChild(alertCard);
+
+    // 7초 동안 유지 후 부드럽게 퇴장
+    setTimeout(() => {
+      alertCard.classList.add('fade-out');
+      setTimeout(() => alertCard.remove(), 400);
+    }, 6500);
+  }
+
+  // 실시간 레이스 HUD (타이머, 순위표, 미니맵) 갱신
+  updateRaceHUD({ timeStr, ranks, leader, selectedLane }) {
+    if (this.liveTimerDisplay) {
+      this.liveTimerDisplay.textContent = timeStr;
+    }
+
+    // 미니맵 점 위치 업데이트 (우측 0m -> 좌측 50m)
+    ranks.forEach(s => {
+      const dot = document.getElementById(`minimap-dot-${s.lane}`);
+      if (dot) {
+        const percent = Math.min(100, Math.max(0, (s.progressZ / 50.0) * 100));
+        dot.style.right = `${percent}%`;
+        if (s.lane === selectedLane) {
+          dot.classList.add('my-bet-dot');
+        }
+      }
+    });
+
+    // 좌측 실시간 리더보드 (내기 배터 이름 포함)
+    if (this.leaderboardContainer) {
+      this.leaderboardContainer.innerHTML = ranks.map((s, idx) => {
+        const isBet = (s.lane === selectedLane);
+        const dist = Math.min(50, Math.max(0, s.progressZ)).toFixed(1);
+        const bettorTag = s.data.bettorName ? `<span class="lb-bettor">[${s.data.bettorName}]</span>` : '';
+
+        let statusBadge = '<span class="status-swimming">🏊‍♂️</span>';
+        if (s.state === 'INCIDENT') {
+          statusBadge = `<span class="status-incident" title="${s.incident.name}">${s.incident.emoji}</span>`;
+        } else if (s.state === 'FINISHED') {
+          statusBadge = '<span class="status-finish">🏁 터치!</span>';
+        }
+
+        return `
+          <div class="leaderboard-item ${isBet ? 'highlight-bet' : ''} rank-${idx + 1}">
+            <span class="lb-rank">${idx + 1}위</span>
+            <span class="lb-lane lane-tag-${s.lane}">L${s.lane}</span>
+            <span class="lb-name">${s.data.name} ${bettorTag}</span>
+            <span class="lb-status">${statusBadge}</span>
+            <span class="lb-dist">${dist}m</span>
+          </div>
+        `;
+      }).join('');
+    }
+  }
+
+  // 경기 결과 모달
+  showResultModal({ userLane, userRank, betAmount, winCoins, multiplier, rankedSwimmers, totalCoins }) {
+    this.resultModal.classList.remove('hidden');
+
+    const titleEl = document.getElementById('result-title');
+    const msgEl = document.getElementById('result-msg');
+    const payoutEl = document.getElementById('result-payout');
+    const podiumEl = document.getElementById('result-podium');
+    const rankListEl = document.getElementById('result-full-ranks');
+
+    const isWin = (userRank <= 4 && winCoins > 0);
+
+    if (userRank === 1) {
+      titleEl.innerHTML = `🥇 1위 적중 대박!! 🥇`;
+      titleEl.className = 'result-title gold';
+      msgEl.textContent = `축하합니다! ${userLane}번 레인이 완벽한 정석 자유형으로 1위를 차지했습니다!`;
+    } else if (userRank === 2) {
+      titleEl.innerHTML = `🥈 아쉬운 2위! 🥈`;
+      titleEl.className = 'result-title silver';
+      msgEl.textContent = `아깝습니다! ${userLane}번 레인이 2위로 결승선을 통과했습니다.`;
+    } else if (userRank === 3) {
+      titleEl.innerHTML = `🥉 3위 입상! 🥉`;
+      titleEl.className = 'result-title bronze';
+      msgEl.textContent = `${userLane}번 레인이 3위로 시상대에 올랐습니다!`;
+    } else if (userRank === 4) {
+      titleEl.innerHTML = `🏅 4위 본전 환급! 🏅`;
+      titleEl.className = 'result-title neutral';
+      msgEl.textContent = `4위로 배팅 원금을 안전하게 환급받았습니다.`;
+    } else {
+      titleEl.innerHTML = `💥 배팅 실패 (${userRank}위) 💥`;
+      titleEl.className = 'result-title fail';
+      msgEl.textContent = `돌발 상황의 벽을 넘지 못하고 ${userRank}위로 레이스를 마쳤습니다!`;
+    }
+
+    payoutEl.innerHTML = `
+      <div class="payout-row">
+        <span>배팅 금액:</span> <strong>${betAmount.toLocaleString()} C</strong>
+      </div>
+      <div class="payout-row">
+        <span>배당 배율:</span> <strong>${multiplier.toFixed(1)}x</strong>
+      </div>
+      <div class="payout-row highlight">
+        <span>획득 코인:</span> <strong class="${isWin ? 'text-win' : 'text-lose'}">+${winCoins.toLocaleString()} C</strong>
+      </div>
+      <div class="payout-row total">
+        <span>현재 총 보유 코인:</span> <strong>${totalCoins.toLocaleString()} C</strong>
+      </div>
+    `;
+
+    // 1, 2, 3위 포디움 시상대 (배터 이름 대문짝 강조)
+    if (podiumEl) {
+      const s1 = rankedSwimmers[0];
+      const s2 = rankedSwimmers[1];
+      const s3 = rankedSwimmers[2];
+
+      const b1 = s1?.data.bettorName ? `<div class="podium-bettor">🏷️ ${s1.data.bettorName}</div>` : '';
+      const b2 = s2?.data.bettorName ? `<div class="podium-bettor">🏷️ ${s2.data.bettorName}</div>` : '';
+      const b3 = s3?.data.bettorName ? `<div class="podium-bettor">🏷️ ${s3.data.bettorName}</div>` : '';
+
+      podiumEl.innerHTML = `
+        <div class="podium-col rank-2">
+          ${b2}
+          <div class="podium-swimmer">${s2 ? s2.data.flag : ''} ${s2 ? s2.data.name : ''}</div>
+          <div class="podium-step step-2">2위 (L${s2 ? s2.lane : ''})</div>
+        </div>
+        <div class="podium-col rank-1">
+          <div class="podium-crown">👑</div>
+          ${b1}
+          <div class="podium-swimmer">${s1 ? s1.data.flag : ''} ${s1 ? s1.data.name : ''}</div>
+          <div class="podium-step step-1">1위 (L${s1 ? s1.lane : ''})</div>
+        </div>
+        <div class="podium-col rank-3">
+          ${b3}
+          <div class="podium-swimmer">${s3 ? s3.data.flag : ''} ${s3 ? s3.data.name : ''}</div>
+          <div class="podium-step step-3">3위 (L${s3 ? s3.lane : ''})</div>
+        </div>
+      `;
+    }
+
+    // 8인 전체 순위표 (배터 이름 & 돌발 상황 복구 요약)
+    if (rankListEl) {
+      rankListEl.innerHTML = rankedSwimmers.map((s, idx) => {
+        const isBet = (s.lane === userLane);
+        const bettorStr = s.data.bettorName ? `<strong class="fr-bettor">[배터: ${s.data.bettorName}]</strong>` : '';
+        const incidentDesc = s.incident ? `${s.incident.emoji} ${s.incident.name} (회복완영)` : '✨ 정석 질주 완주';
+
+        return `
+          <div class="full-rank-row ${isBet ? 'my-pick' : ''}">
+            <span class="fr-num">${idx + 1}등</span>
+            <span class="fr-lane">LANE ${s.lane}</span>
+            <span class="fr-name">${s.data.flag} ${s.data.name} ${bettorStr}</span>
+            <span class="fr-incident">${incidentDesc}</span>
+          </div>
+        `;
+      }).join('');
+    }
+  }
+}

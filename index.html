@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#060b14">
+  <link rel="manifest" href="./manifest.json">
+  <title>올림픽 50m 자유형 코믹 수영 배팅 레이스 (3D Olympic Swimming Game)</title>
+  <meta name="description" content="실제 50m 10레인 올림픽 규격 수영장에서 펼쳐지는 예측불가 코믹 수영 배팅 게임! 1등만 정상 완주, 7명은 폭소 유발 돌발 상황!">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- 모바일 세로 화면 회전 안내 오버레이 (Portrait Rotate Guide) -->
+  <div id="orientation-overlay" class="orientation-guide">
+    <div class="orientation-box">
+      <div class="phone-rotate-icon">📱</div>
+      <h2>가로 모드로 회전해 주세요!</h2>
+      <p>실제 50m 올림픽 수영장의 박진감 넘치는 3D 중계를 위해 스마트폰을 가로로 돌려주세요.</p>
+      <button id="btn-dismiss-orientation" class="btn-continue-portrait">세로 모드로 계속 진행</button>
+    </div>
+  </div>
+
+  <!-- 3D WebGL 캔버스 뷰포트 -->
+  <div id="canvas-container"></div>
+
+  <!-- 글로벌 상단 네비게이션 & 방송 헤더 -->
+  <header id="global-header">
+    <div class="header-left">
+      <div class="logo-badge">
+        <span class="olympic-rings">⭕⭕⭕</span>
+        <h1 class="game-title">AQUATICS 50M <span class="badge-live">LIVE</span></h1>
+      </div>
+      <p class="game-subtitle">올림픽 규격 50m 10레인 코믹 배팅 레이스</p>
+    </div>
+
+    <!-- 카메라 시점 변경 툴바 -->
+    <div class="camera-toolbar">
+      <span class="toolbar-label">CAM 뷰:</span>
+      <button class="cam-btn active" data-cam="BROADCAST" id="cam-broadcast">📺 방송 중계</button>
+      <button class="cam-btn" data-cam="MY_BET" id="cam-my-bet">🎯 내 선수 밀착</button>
+      <button class="cam-btn" data-cam="OVERVIEW" id="cam-overview">🏟️ 전경 와이드</button>
+      <button class="cam-btn" data-cam="FINISH_LINE" id="cam-finish">🏁 결승선 터치</button>
+    </div>
+
+    <!-- 유저 지갑 & 사운드 컨트롤 & 전체화면 -->
+    <div class="header-right">
+      <div class="wallet-badge" title="보유 코인">
+        <span class="coin-icon">🪙</span>
+        <span id="wallet-coins" class="coin-val">10,000</span>
+        <span class="coin-unit">C</span>
+        <button id="btn-refill" class="refill-btn" title="코인이 부족할 때 무료 충전">+</button>
+      </div>
+      <button id="btn-toggle-mobile" class="icon-btn" title="모바일 가로 뷰 시뮬레이터 (Mobile Landscape View)">📱</button>
+      <button id="btn-fullscreen" class="icon-btn" title="모바일 전체화면 (Fullscreen)">⛶</button>
+      <button id="btn-mute" class="icon-btn" title="사운드 온/오프">🔊</button>
+    </div>
+  </header>
+
+  <!-- 1. 배팅 페이즈 화면 (경기 시작 전) -->
+  <section id="betting-screen" class="overlay-screen">
+    <div class="betting-container">
+      <div class="betting-headline">
+        <h2 class="section-title">출전 선수 라인업 & 배팅 선택</h2>
+        <p class="section-desc">
+          10개 레인 중 가운데 8개 레인(1~8번)에서 경기가 진행됩니다. <strong>오직 1명만 무사 완주</strong>하며, 
+          나머지는 포복절도 돌발 상황이 발생합니다! 과연 누가 1등으로 들어올까요?
+        </p>
+      </div>
+
+      <!-- 🏆 [핵심] 8인 내기 참가자 명단 빠른 등록 바 (Quick Bettor Registry) -->
+      <div class="bettor-registry-bar">
+        <div class="registry-header">
+          <div class="registry-title">
+            <span class="registry-icon">🏷️</span>
+            <strong>내기 참가자 명단 등록 (친구/동료 이름 입력)</strong>
+            <span class="registry-desc">각 레인에 배팅한 사람의 이름을 적어주세요! 경기 중 순위표와 자막에 표시됩니다.</span>
+          </div>
+          <button id="btn-auto-fill-bettors" class="btn-auto-fill" title="철수, 영희, 부장님 등 예시 이름으로 자동 채우기">🎲 예시 이름 자동 채우기</button>
+        </div>
+        <div id="bettor-quick-inputs" class="registry-inputs-grid">
+          <!-- JS에서 레인 1~8 인풋 8개 동적 생성 -->
+        </div>
+      </div>
+
+      <!-- 8명의 선수 카드 그리드 -->
+      <div id="swimmer-cards" class="swimmer-grid">
+        <!-- JS로 동적 렌더링 -->
+      </div>
+
+      <!-- 하단 배팅 컨트롤러 독 -->
+      <div class="betting-dock">
+        <div class="dock-summary">
+          <div class="dock-label">선택한 선수 & 내기 참가자:</div>
+          <div id="selected-swimmer-name" class="dock-target">[4번 레인] 김태환 (국가대표 에이스)</div>
+          <div class="dock-bettor-input-wrapper">
+            <span class="dock-bettor-label">🏷️ 이 레인에 내기 건 사람:</span>
+            <input type="text" id="dock-bettor-input" placeholder="이름 입력 (예: 철수)" class="dock-bettor-input">
+          </div>
+          <div id="selected-swimmer-quote" class="dock-quote">"오늘 목표는 제 자신의 한국 신기록 경신뿐입니다."</div>
+        </div>
+
+        <div class="dock-chips">
+          <button class="chip-btn" data-val="100">+100</button>
+          <button class="chip-btn" data-val="500">+500</button>
+          <button class="chip-btn" data-val="1000">+1,000</button>
+          <button class="chip-btn" data-val="5000">+5,000</button>
+          <button class="chip-btn" data-val="half">절반</button>
+          <button class="chip-btn" data-val="max">올인</button>
+        </div>
+
+        <div class="dock-inputs">
+          <div class="input-group">
+            <label for="bet-amount-input">배팅 코인:</label>
+            <input type="number" id="bet-amount-input" value="1000" min="100" step="100">
+          </div>
+          <div id="potential-win" class="potential-win">
+            <!-- JS 갱신 -->
+          </div>
+          <button id="btn-start-race" class="btn-start-race">
+            <span class="btn-icon">🏊‍♂️</span>
+            <span class="btn-text">경기 시작 (START)</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 1.5 올림픽 결승 라인업 선수 소개 인트로 씬 (Athlete Presentation Ceremony) -->
+  <section id="intro-screen" class="overlay-intro hidden">
+    <!-- 상단 우측 눈에 확 띄는 플로팅 스킵 컨트롤 바 -->
+    <div class="intro-floating-controls">
+      <button id="btn-next-intro" class="btn-intro-next" title="현재 선수를 넘기고 다음 선수 소개 보기">다음 선수 ⏭️</button>
+      <button id="btn-skip-intro" class="btn-intro-skip" title="선수 소개를 모두 건너뛰고 경기 즉시 시작">소개 전체 건너뛰기 ⏩</button>
+    </div>
+
+    <div class="intro-header">
+      <div class="intro-event-title">🏊‍♂️ OLYMPIC 50M FREESTYLE FINAL - ATHLETE PRESENTATION</div>
+    </div>
+
+    <!-- 하단 방송용 대형 선수 프로필 배너 -->
+    <div class="intro-card-dock">
+      <div class="intro-lane-tag" id="intro-lane-tag">LANE 1</div>
+      <div class="intro-profile">
+        <div class="intro-avatar" id="intro-avatar">👴</div>
+        <div class="intro-details">
+          <div class="intro-name-row">
+            <h2 class="intro-name" id="intro-name">박춘삼</h2>
+            <span class="intro-age-gender" id="intro-age-gender">74세 (남)</span>
+            <div class="intro-bettor-badge" id="intro-bettor-badge">내기 참가자: <span>철수</span></div>
+          </div>
+          <p class="intro-nickname" id="intro-nickname">"새벽 약수터의 전설"</p>
+          <p class="intro-quote" id="intro-quote">"내가 50년 전 한강 헤엄쳐 건너던 실력 아직 안 죽었다!"</p>
+        </div>
+      </div>
+
+      <!-- 하단 카드 내 빠른 건너뛰기 버튼 -->
+      <div class="intro-dock-actions">
+        <button id="btn-dock-next" class="btn-dock-action">다음 선수 ⏭️</button>
+        <button id="btn-dock-skip" class="btn-dock-action primary">경기 바로 시작 ⏩</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. 경기 진행 중 방송 HUD -->
+  <section id="race-hud" class="overlay-hud hidden">
+    <!-- 상단 2D 트랙 미니맵 (0m ~ 50m) -->
+    <div class="minimap-container">
+      <div class="minimap-header">
+        <span class="minimap-title">50M LANE TRACKER (진행 방향: 우측 0m ➡️ 좌측 50m)</span>
+        <div class="minimap-scale">
+          <span>50m (FINISH) 🏁</span>
+          <span>35m</span>
+          <span>25m (HALF)</span>
+          <span>15m</span>
+          <span>0m (START) 🚩</span>
+        </div>
+      </div>
+      <div id="minimap-lanes" class="minimap-lanes">
+        <!-- 레인 1~8 미니맵 점 -->
+      </div>
+    </div>
+
+    <!-- 좌측 상단 실시간 중계 정보 & 타이머 (좌측 상단에 완전 고정) -->
+    <div class="hud-top-left" style="position: fixed !important; top: 85px !important; left: 24px !important; right: auto !important; width: 175px !important; z-index: 99999 !important; pointer-events: none !important;">
+      <div class="live-broadcast-tag">🔴 LIVE BROADCAST</div>
+      <div class="timer-card">
+        <span class="timer-label">RACE TIME</span>
+        <div id="live-timer" class="timer-digits">00:00.00</div>
+      </div>
+    </div>
+
+    <!-- 좌측 하단 실시간 순위 리더보드 -->
+    <div class="leaderboard-panel">
+      <div class="lb-header">
+        <span class="lb-title">실시간 순위</span>
+        <span class="lb-sub">50M 자유형 결선 (7등까지 완영)</span>
+      </div>
+      <div id="race-leaderboard" class="lb-list">
+        <!-- JS 실시간 업데이트 -->
+      </div>
+    </div>
+
+    <!-- 돌발 상황 누적 피드 스택 (우측 상단에 완전 고정 - 좌측 타이머와 1,300px 이상 영구 분리!) -->
+    <div id="incident-stack" class="incident-stack" style="position: fixed !important; top: 85px !important; right: 24px !important; left: auto !important; width: 380px !important; max-width: 38vw !important; z-index: 100000 !important; display: flex !important; flex-direction: column !important; gap: 10px !important; pointer-events: auto !important;">
+      <!-- 동적 추가 -->
+    </div>
+
+    <!-- 중앙 카운트다운 / 스타트 안내 텍스트 -->
+    <div id="race-announcement" class="race-announcement hidden"></div>
+  </section>
+
+  <!-- 3. 경기 종료 및 배팅 결과 모달 -->
+  <div id="result-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div id="result-title" class="result-title gold">🥇 경기 결과 발표 🥇</div>
+      <p id="result-msg" class="result-msg"></p>
+
+      <!-- 1, 2, 3위 시상대 포디움 -->
+      <div id="result-podium" class="result-podium">
+        <!-- JS 렌더링 -->
+      </div>
+
+      <!-- 배팅 정산 내역 -->
+      <div id="result-payout" class="result-payout">
+        <!-- JS 렌더링 -->
+      </div>
+
+      <!-- 8명 전체 순위 및 돌발 상황 명장면 -->
+      <div class="result-details">
+        <h3 class="details-title">📋 8인 전체 순위 & 돌발 상황 명장면</h3>
+        <div id="result-full-ranks" class="full-ranks-list"></div>
+      </div>
+
+      <div class="modal-actions">
+        <button id="btn-next-race" class="btn-next-race">🔄 다음 경기 준비 (NEXT RACE)</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>

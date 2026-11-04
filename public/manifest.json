@@ -1,0 +1,17 @@
+{
+  "name": "올림픽 50m 자유형 코믹 수영 배팅 레이스",
+  "short_name": "코믹수영",
+  "description": "올림픽 규격 50m 10레인 코믹 배팅 레이스 게임",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#060b14",
+  "theme_color": "#060b14",
+  "icons": [
+    {
+      "src": "./favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    }
+  ]
+}
