@@ -1620,7 +1620,7 @@ body {
 .fr-name { flex: 1; }
 .fr-incident { color: var(--text-muted); }
 
-/* 다음 경기 버튼 */
+/* 다음 경기 버튼 (데스크톱 기본) */
 .btn-next-race {
   width: 100%;
   background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
@@ -1642,14 +1642,21 @@ body {
   background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
 }
 
-/* 유틸리티 */
-.hidden {
-  display: none !important;
-}
-
 /* ==========================================================================
-   반응형 및 모바일 가로(Landscape) 앱 최적화
+   유틸리티 & 화면 가시성 (최우선 순위 강제 - Screen Visibility Guarantee)
    ========================================================================== */
+.hidden,
+.overlay-screen.hidden,
+.overlay-intro.hidden,
+#betting-screen.hidden,
+#intro-screen.hidden,
+#race-hud.hidden,
+#result-modal.hidden {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
 
 /* 세로 모드 회전 안내 오버레이 (Portrait Rotate Guide) */
 .orientation-guide {
@@ -1696,31 +1703,31 @@ body {
 }
 
 .orientation-box p {
-  font-size: 0.85rem;
+  font-size: 0.95rem;
   color: var(--text-muted);
   line-height: 1.5;
-  max-width: 320px;
+  max-width: 340px;
   margin: 0 auto 16px;
 }
 
 .btn-continue-portrait {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: var(--text-muted);
-  font-size: 0.78rem;
-  padding: 6px 14px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #e2e8f0;
+  font-size: 0.88rem;
+  padding: 8px 18px;
   border-radius: 20px;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .btn-continue-portrait:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.25);
   color: #fff;
 }
 
 /* 태블릿 및 일반 데스크톱 반응형 */
-@media (max-width: 1100px) and (min-height: 541px) {
+@media (max-width: 1100px) and (min-height: 621px) {
   .swimmer-grid {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -1730,10 +1737,10 @@ body {
 }
 
 /* ==========================================================================
-   🔥 [핵심] 모바일 앱 가로 화면(Mobile Landscape) 특화 최적화
-   화면 높이 540px 이하 모바일 가로 모드 (iPhone, Galaxy 등 스마트폰 가로 화면 전체)
+   🔥 [핵심] 모바일 가로(Mobile Landscape) & 시뮬레이터 최적화
+   화면 높이 620px 이하, 모바일 가로 모드, 또는 시뮬레이터 활성화 시 적용
    ========================================================================== */
-@media (max-height: 540px), (max-width: 950px) and (orientation: landscape) {
+@media (max-height: 620px), (max-width: 950px) and (orientation: landscape), (pointer: coarse) and (max-height: 680px) {
   /* 1. 상단 글로벌 헤더 슬림화 (42px) */
   #global-header {
     height: 42px !important;
@@ -1743,11 +1750,16 @@ body {
     display: none !important;
   }
   .game-title {
-    font-size: 0.92rem !important;
+    font-size: 14px !important;
     gap: 4px !important;
+    white-space: nowrap !important;
   }
   .olympic-rings {
-    font-size: 0.78rem !important;
+    font-size: 13px !important;
+  }
+  .badge-live {
+    font-size: 10px !important;
+    padding: 2px 4px !important;
   }
   .toolbar-label {
     display: none !important;
@@ -1756,89 +1768,120 @@ body {
     gap: 4px !important;
   }
   .camera-toolbar .cam-btn {
-    padding: 3px 6px !important;
-    font-size: 0.65rem !important;
+    padding: 4px 8px !important;
+    font-size: 12px !important;
+    font-weight: 700 !important;
     border-radius: 6px !important;
+    white-space: nowrap !important;
   }
   .wallet-badge {
-    padding: 3px 6px !important;
-    font-size: 0.72rem !important;
-    gap: 3px !important;
+    padding: 3px 8px !important;
+    font-size: 13px !important;
+    gap: 4px !important;
   }
   .coin-icon {
-    font-size: 0.8rem !important;
+    font-size: 14px !important;
   }
   .refill-btn {
-    width: 18px !important;
-    height: 18px !important;
-    font-size: 0.7rem !important;
+    width: 20px !important;
+    height: 20px !important;
+    font-size: 12px !important;
   }
   .icon-btn {
-    width: 28px !important;
-    height: 28px !important;
-    font-size: 0.8rem !important;
+    width: 32px !important;
+    height: 32px !important;
+    font-size: 15px !important;
   }
 
   /* 2. 배팅 화면 슬림 & 스와이프 레이아웃 */
-  .overlay-screen {
+  .overlay-screen:not(.hidden) {
     top: 42px !important;
-    height: calc(100% - 42px) !important;
+    height: calc(100vh - 42px) !important;
     padding: 4px max(10px, env(safe-area-inset-left)) 4px max(10px, env(safe-area-inset-right)) !important;
     overflow-y: auto !important;
-    display: block !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
   }
   .betting-container {
-    height: auto !important;
+    height: 100% !important;
     min-height: 100% !important;
     display: flex !important;
     flex-direction: column !important;
-    justify-content: flex-start !important;
+    justify-content: space-between !important;
     gap: 4px !important;
   }
   .betting-headline {
     margin-bottom: 2px !important;
   }
   .section-title {
-    font-size: 0.95rem !important;
+    font-size: 15px !important;
+    font-weight: 800 !important;
   }
   .section-desc {
     display: none !important;
   }
 
-  /* 8인 빠른 내기 등록 바 컴팩트화 */
+  /* 8인 빠른 내기 등록 바 컴팩트화 & 가독성 향상 */
   .bettor-registry-bar {
     padding: 4px 8px !important;
     margin-bottom: 4px !important;
     border-radius: 8px !important;
+    background: rgba(15, 23, 42, 0.75) !important;
   }
   .registry-header {
-    margin-bottom: 3px !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    margin-bottom: 4px !important;
   }
   .registry-title {
-    font-size: 0.72rem !important;
+    font-size: 13px !important;
+    font-weight: 700 !important;
     gap: 4px !important;
+    display: flex !important;
+    align-items: center !important;
   }
   .registry-desc {
     display: none !important;
   }
   .btn-auto-fill {
-    font-size: 0.65rem !important;
-    padding: 2px 6px !important;
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    padding: 3px 8px !important;
+    border-radius: 6px !important;
   }
   .registry-inputs-grid {
-    grid-template-columns: repeat(8, 1fr) !important;
-    gap: 3px !important;
+    display: flex !important;
+    flex-direction: row !important;
+    overflow-x: auto !important;
+    scroll-snap-type: x mandatory !important;
+    -webkit-overflow-scrolling: touch !important;
+    gap: 6px !important;
+    padding-bottom: 2px !important;
   }
   .reg-lane-col {
-    padding: 2px !important;
+    flex: 0 0 115px !important;
+    padding: 4px 6px !important;
+    background: rgba(0, 0, 0, 0.35) !important;
+    border-radius: 6px !important;
+    scroll-snap-align: start !important;
   }
   .reg-lane-tag {
-    font-size: 0.6rem !important;
+    font-size: 12px !important;
+    font-weight: 800 !important;
+    margin-bottom: 2px !important;
+    white-space: nowrap !important;
   }
   .reg-lane-input {
-    font-size: 0.65rem !important;
-    padding: 1px 3px !important;
-    height: 20px !important;
+    font-size: 16px !important;
+    padding: 3px 6px !important;
+    height: 30px !important;
+    border-radius: 6px !important;
+    background: rgba(255, 255, 255, 0.12) !important;
+    color: #fff !important;
+    width: 100% !important;
+    touch-action: manipulation;
   }
 
   /* 8명 영자 카드: 가로 스와이프 릴 (Thumb Swipeable) */
@@ -1849,84 +1892,94 @@ body {
     overflow-y: hidden !important;
     scroll-snap-type: x mandatory !important;
     -webkit-overflow-scrolling: touch !important;
-    gap: 6px !important;
-    height: 135px !important;
-    max-height: 135px !important;
+    gap: 8px !important;
+    height: 145px !important;
+    max-height: 145px !important;
     padding-bottom: 2px !important;
   }
   .swimmer-card {
-    flex: 0 0 148px !important;
-    width: 148px !important;
+    flex: 0 0 160px !important;
+    width: 160px !important;
     height: 100% !important;
-    padding: 6px !important;
+    padding: 8px !important;
     scroll-snap-align: start !important;
     border-radius: 8px !important;
   }
   .card-header {
-    margin-bottom: 2px !important;
+    margin-bottom: 3px !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
   }
   .lane-badge {
-    font-size: 0.62rem !important;
-    padding: 1px 5px !important;
+    font-size: 12px !important;
+    font-weight: 800 !important;
+    padding: 2px 6px !important;
   }
   .odds-tag {
-    font-size: 0.62rem !important;
+    font-size: 13px !important;
+    font-weight: 800 !important;
+    color: #facc15 !important;
   }
   .card-body {
     gap: 6px !important;
   }
   .swimmer-avatar {
-    font-size: 1.4rem !important;
-    width: 28px !important;
-    height: 28px !important;
+    font-size: 24px !important;
+    width: 32px !important;
+    height: 32px !important;
   }
   .swimmer-name {
-    font-size: 0.78rem !important;
+    font-size: 14px !important;
+    font-weight: 800 !important;
   }
   .swimmer-age {
-    font-size: 0.62rem !important;
+    font-size: 12px !important;
+    color: #94a3b8 !important;
   }
   .swimmer-nick {
     display: none !important;
   }
   .bettor-input-row {
-    margin: 2px 0 !important;
+    margin: 3px 0 !important;
   }
   .bettor-label {
     display: none !important;
   }
   .bettor-name-input {
-    font-size: 0.65rem !important;
-    padding: 2px 4px !important;
+    font-size: 16px !important;
+    padding: 3px 6px !important;
+    height: 30px !important;
     width: 100% !important;
+    border-radius: 6px !important;
+    touch-action: manipulation;
   }
   .fake-stats {
     display: none !important;
   }
   .swimmer-quote {
-    font-size: 0.62rem !important;
-    -webkit-line-clamp: 2 !important;
-    display: -webkit-box !important;
-    -webkit-box-orient: vertical !important;
-    overflow: hidden !important;
+    display: none !important;
   }
 
   /* 하단 배팅 컨트롤러 독 컴팩트화 */
   .betting-dock {
-    padding: 4px 8px !important;
-    margin-top: 2px !important;
+    padding: 6px 10px !important;
+    margin-top: 4px !important;
     border-radius: 10px !important;
     gap: 8px !important;
     flex-wrap: nowrap !important;
   }
   .dock-summary {
-    min-width: 130px !important;
+    min-width: 140px !important;
   }
   .dock-label {
-    font-size: 0.58rem !important;
+    font-size: 11px !important;
+    color: #94a3b8 !important;
   }
   .dock-target {
-    font-size: 0.8rem !important;
+    font-size: 13px !important;
+    font-weight: 800 !important;
+    white-space: nowrap !important;
   }
   .dock-bettor-input-wrapper {
     display: none !important;
@@ -1935,87 +1988,101 @@ body {
     display: none !important;
   }
   .dock-chips {
-    gap: 2px !important;
+    gap: 4px !important;
   }
   .chip-btn {
-    padding: 3px 6px !important;
-    font-size: 0.65rem !important;
+    padding: 5px 8px !important;
+    font-size: 12px !important;
+    font-weight: 700 !important;
     border-radius: 6px !important;
+    touch-action: manipulation;
   }
   .dock-inputs {
-    gap: 6px !important;
+    gap: 8px !important;
   }
   .input-group label {
     display: none !important;
   }
   #bet-amount-input {
-    width: 70px !important;
-    padding: 3px 5px !important;
-    font-size: 0.75rem !important;
+    width: 85px !important;
+    height: 34px !important;
+    padding: 4px !important;
+    font-size: 16px !important;
+    font-weight: 800 !important;
+    touch-action: manipulation;
   }
   .potential-win {
     display: none !important;
   }
   .btn-start-race {
-    padding: 6px 12px !important;
-    font-size: 0.78rem !important;
-    border-radius: 8px !important;
+    padding: 8px 16px !important;
+    font-size: 14px !important;
+    font-weight: 800 !important;
+    border-radius: 10px !important;
     white-space: nowrap !important;
+    background: linear-gradient(135deg, #f59e0b 0%, #ea580c 100%) !important;
   }
 
   /* 3. 올림픽 선수 소개 인트로 모바일 가로 최적화 */
-  .overlay-intro {
+  .overlay-intro:not(.hidden) {
     top: 42px !important;
-    height: calc(100% - 42px) !important;
+    height: calc(100vh - 42px) !important;
     padding: 6px max(10px, env(safe-area-inset-left)) 6px max(10px, env(safe-area-inset-right)) !important;
+    display: block !important;
   }
   .intro-floating-controls {
     top: 48px !important;
     right: max(10px, env(safe-area-inset-right)) !important;
-    gap: 6px !important;
+    gap: 8px !important;
   }
   .btn-intro-next {
-    padding: 4px 10px !important;
-    font-size: 0.72rem !important;
+    padding: 6px 12px !important;
+    font-size: 13px !important;
+    font-weight: 700 !important;
     border-radius: 14px !important;
   }
   .btn-intro-skip {
-    padding: 4px 10px !important;
-    font-size: 0.72rem !important;
+    padding: 6px 12px !important;
+    font-size: 13px !important;
+    font-weight: 800 !important;
     border-radius: 14px !important;
   }
   .intro-event-title {
-    font-size: 0.68rem !important;
+    font-size: 12px !important;
     padding: 3px 8px !important;
   }
   .intro-card-dock {
-    max-width: 580px !important;
-    padding: 4px 10px !important;
-    margin: 0 auto 2px !important;
+    max-width: 620px !important;
+    padding: 6px 14px !important;
+    margin: 0 auto 4px !important;
     border-radius: 12px !important;
-    gap: 8px !important;
+    gap: 10px !important;
   }
   .intro-lane-tag {
-    font-size: 0.78rem !important;
-    padding: 3px 6px !important;
+    font-size: 14px !important;
+    font-weight: 800 !important;
+    padding: 3px 8px !important;
   }
   .intro-avatar {
-    font-size: 1.4rem !important;
-    width: 32px !important;
-    height: 32px !important;
+    font-size: 26px !important;
+    width: 36px !important;
+    height: 36px !important;
   }
   .intro-name {
-    font-size: 0.88rem !important;
+    font-size: 16px !important;
+    font-weight: 800 !important;
   }
   .intro-age-gender {
-    font-size: 0.62rem !important;
+    font-size: 13px !important;
   }
   .intro-bettor-badge {
-    font-size: 0.62rem !important;
-    padding: 1px 5px !important;
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    padding: 2px 8px !important;
+    color: #facc15 !important;
   }
   .intro-nickname {
-    font-size: 0.62rem !important;
+    font-size: 13px !important;
   }
   .intro-quote {
     display: none !important;
@@ -2026,134 +2093,151 @@ body {
 
   /* 4. 경기 진행 HUD 모바일 가로 최적화 */
   .minimap-container {
-    top: 44px !important;
-    width: 50% !important;
+    top: 46px !important;
+    width: 48% !important;
     left: 50% !important;
     transform: translateX(-50%) !important;
-    padding: 3px 6px !important;
+    padding: 3px 8px !important;
     border-radius: 8px !important;
   }
   .minimap-title {
     display: none !important;
   }
   .minimap-scale {
-    font-size: 0.55rem !important;
+    font-size: 11px !important;
   }
   .minimap-track {
-    height: 4px !important;
-    margin-bottom: 1px !important;
+    height: 5px !important;
+    margin-bottom: 2px !important;
   }
   .m-lane-num {
-    font-size: 0.55rem !important;
-    width: 8px !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    width: 12px !important;
   }
   .m-dot {
-    width: 6px !important;
-    height: 6px !important;
+    width: 7px !important;
+    height: 7px !important;
   }
 
   .hud-top-left {
-    top: 44px !important;
+    top: 46px !important;
     left: max(8px, env(safe-area-inset-left)) !important;
-    width: 85px !important;
+    width: 95px !important;
   }
   .live-broadcast-tag {
     display: none !important;
   }
   .timer-card {
-    padding: 2px 5px !important;
+    padding: 3px 6px !important;
     border-radius: 6px !important;
   }
   .timer-label {
-    font-size: 0.5rem !important;
+    font-size: 11px !important;
   }
   .timer-digits {
-    font-size: 0.78rem !important;
+    font-size: 15px !important;
+    font-weight: 800 !important;
+    font-family: monospace !important;
   }
 
   .leaderboard-panel {
-    bottom: 4px !important;
+    bottom: 6px !important;
     left: max(8px, env(safe-area-inset-left)) !important;
-    width: 155px !important;
-    max-height: 105px !important;
-    padding: 4px !important;
+    width: 180px !important;
+    max-height: 120px !important;
+    padding: 4px 6px !important;
     border-radius: 8px !important;
   }
   .lb-header {
-    margin-bottom: 1px !important;
+    margin-bottom: 2px !important;
   }
   .lb-title {
-    font-size: 0.6rem !important;
+    font-size: 12px !important;
+    font-weight: 800 !important;
   }
   .lb-sub {
     display: none !important;
   }
   .lb-row {
-    padding: 1px 2px !important;
-    font-size: 0.6rem !important;
+    padding: 2px 4px !important;
+    font-size: 12px !important;
   }
   .lb-rank {
-    width: 14px !important;
+    width: 16px !important;
+    font-weight: 800 !important;
   }
   .lb-dist {
-    font-size: 0.55rem !important;
+    font-size: 12px !important;
   }
 
   .incident-stack {
-    top: 44px !important;
+    top: 46px !important;
     right: max(8px, env(safe-area-inset-right)) !important;
-    width: 190px !important;
+    width: 210px !important;
     max-width: 32vw !important;
-    gap: 3px !important;
+    gap: 4px !important;
   }
   .incident-feed-card {
-    padding: 4px 6px !important;
-    font-size: 0.62rem !important;
-    gap: 4px !important;
+    padding: 4px 8px !important;
+    font-size: 12px !important;
+    gap: 5px !important;
     border-radius: 6px !important;
   }
   .feed-emoji {
-    font-size: 1.0rem !important;
+    font-size: 16px !important;
   }
   .feed-name {
-    font-size: 0.68rem !important;
+    font-size: 13px !important;
+    font-weight: 800 !important;
   }
   .feed-incident-name {
-    font-size: 0.6rem !important;
+    font-size: 12px !important;
   }
   .feed-comment {
-    font-size: 0.6rem !important;
+    font-size: 12px !important;
   }
 
   .announcement-box {
-    font-size: 1.6rem !important;
-    padding: 8px 16px !important;
+    font-size: 1.8rem !important;
+    padding: 8px 18px !important;
   }
 
   /* 5. 결과 모달 모바일 가로 최적화 */
   .modal-card {
     max-height: 92vh !important;
     overflow-y: auto !important;
-    padding: 10px 14px !important;
-    max-width: 420px !important;
-    border-radius: 12px !important;
+    padding: 12px 16px !important;
+    max-width: 440px !important;
+    border-radius: 14px !important;
   }
   .result-title {
-    font-size: 1.1rem !important;
+    font-size: 18px !important;
+    font-weight: 900 !important;
   }
   .result-msg {
-    font-size: 0.72rem !important;
+    font-size: 13px !important;
   }
   .podium-step {
-    height: 50px !important;
+    height: 55px !important;
     padding: 4px 2px !important;
+    font-size: 13px !important;
   }
-  .podium-swimmer-name {
-    font-size: 0.7rem !important;
+  .podium-swimmer {
+    font-size: 13px !important;
+    font-weight: 700 !important;
+  }
+  .payout-row {
+    font-size: 13px !important;
+  }
+  .payout-row.highlight {
+    font-size: 16px !important;
+    font-weight: 900 !important;
   }
   .btn-next-race {
-    padding: 6px 10px !important;
-    font-size: 0.85rem !important;
+    padding: 10px !important;
+    font-size: 15px !important;
+    font-weight: 800 !important;
     border-radius: 10px !important;
   }
 }
@@ -2169,11 +2253,16 @@ body.mobile-landscape-mode .game-subtitle {
   display: none !important;
 }
 body.mobile-landscape-mode .game-title {
-  font-size: 0.92rem !important;
+  font-size: 14px !important;
   gap: 4px !important;
+  white-space: nowrap !important;
 }
 body.mobile-landscape-mode .olympic-rings {
-  font-size: 0.78rem !important;
+  font-size: 13px !important;
+}
+body.mobile-landscape-mode .badge-live {
+  font-size: 10px !important;
+  padding: 2px 4px !important;
 }
 body.mobile-landscape-mode .toolbar-label {
   display: none !important;
@@ -2182,49 +2271,54 @@ body.mobile-landscape-mode .camera-toolbar {
   gap: 4px !important;
 }
 body.mobile-landscape-mode .camera-toolbar .cam-btn {
-  padding: 3px 6px !important;
-  font-size: 0.65rem !important;
+  padding: 4px 8px !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
   border-radius: 6px !important;
+  white-space: nowrap !important;
 }
 body.mobile-landscape-mode .wallet-badge {
-  padding: 3px 6px !important;
-  font-size: 0.72rem !important;
-  gap: 3px !important;
+  padding: 3px 8px !important;
+  font-size: 13px !important;
+  gap: 4px !important;
 }
 body.mobile-landscape-mode .coin-icon {
-  font-size: 0.8rem !important;
+  font-size: 14px !important;
 }
 body.mobile-landscape-mode .refill-btn {
-  width: 18px !important;
-  height: 18px !important;
-  font-size: 0.7rem !important;
+  width: 20px !important;
+  height: 20px !important;
+  font-size: 12px !important;
 }
 body.mobile-landscape-mode .icon-btn {
-  width: 28px !important;
-  height: 28px !important;
-  font-size: 0.8rem !important;
+  width: 32px !important;
+  height: 32px !important;
+  font-size: 15px !important;
 }
 
-body.mobile-landscape-mode .overlay-screen {
+body.mobile-landscape-mode .overlay-screen:not(.hidden) {
   top: 42px !important;
-  height: calc(100% - 42px) !important;
+  height: calc(100vh - 42px) !important;
   padding: 4px max(10px, env(safe-area-inset-left)) 4px max(10px, env(safe-area-inset-right)) !important;
   overflow-y: auto !important;
-  display: block !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
 }
 body.mobile-landscape-mode .betting-container {
-  height: auto !important;
+  height: 100% !important;
   min-height: 100% !important;
   display: flex !important;
   flex-direction: column !important;
-  justify-content: flex-start !important;
+  justify-content: space-between !important;
   gap: 4px !important;
 }
 body.mobile-landscape-mode .betting-headline {
   margin-bottom: 2px !important;
 }
 body.mobile-landscape-mode .section-title {
-  font-size: 0.95rem !important;
+  font-size: 15px !important;
+  font-weight: 800 !important;
 }
 body.mobile-landscape-mode .section-desc {
   display: none !important;
@@ -2234,35 +2328,61 @@ body.mobile-landscape-mode .bettor-registry-bar {
   padding: 4px 8px !important;
   margin-bottom: 4px !important;
   border-radius: 8px !important;
+  background: rgba(15, 23, 42, 0.75) !important;
 }
 body.mobile-landscape-mode .registry-header {
-  margin-bottom: 3px !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  margin-bottom: 4px !important;
 }
 body.mobile-landscape-mode .registry-title {
-  font-size: 0.72rem !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
   gap: 4px !important;
+  display: flex !important;
+  align-items: center !important;
 }
 body.mobile-landscape-mode .registry-desc {
   display: none !important;
 }
 body.mobile-landscape-mode .btn-auto-fill {
-  font-size: 0.65rem !important;
-  padding: 2px 6px !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  padding: 3px 8px !important;
+  border-radius: 6px !important;
 }
 body.mobile-landscape-mode .registry-inputs-grid {
-  grid-template-columns: repeat(8, 1fr) !important;
-  gap: 3px !important;
+  display: flex !important;
+  flex-direction: row !important;
+  overflow-x: auto !important;
+  scroll-snap-type: x mandatory !important;
+  -webkit-overflow-scrolling: touch !important;
+  gap: 6px !important;
+  padding-bottom: 2px !important;
 }
 body.mobile-landscape-mode .reg-lane-col {
-  padding: 2px !important;
+  flex: 0 0 115px !important;
+  padding: 4px 6px !important;
+  background: rgba(0, 0, 0, 0.35) !important;
+  border-radius: 6px !important;
+  scroll-snap-align: start !important;
 }
 body.mobile-landscape-mode .reg-lane-tag {
-  font-size: 0.6rem !important;
+  font-size: 12px !important;
+  font-weight: 800 !important;
+  margin-bottom: 2px !important;
+  white-space: nowrap !important;
 }
 body.mobile-landscape-mode .reg-lane-input {
-  font-size: 0.65rem !important;
-  padding: 1px 3px !important;
-  height: 20px !important;
+  font-size: 16px !important;
+  padding: 3px 6px !important;
+  height: 30px !important;
+  border-radius: 6px !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+  color: #fff !important;
+  width: 100% !important;
+  touch-action: manipulation;
 }
 
 body.mobile-landscape-mode .swimmer-grid {
@@ -2272,83 +2392,93 @@ body.mobile-landscape-mode .swimmer-grid {
   overflow-y: hidden !important;
   scroll-snap-type: x mandatory !important;
   -webkit-overflow-scrolling: touch !important;
-  gap: 6px !important;
-  height: 135px !important;
-  max-height: 135px !important;
+  gap: 8px !important;
+  height: 145px !important;
+  max-height: 145px !important;
   padding-bottom: 2px !important;
 }
 body.mobile-landscape-mode .swimmer-card {
-  flex: 0 0 148px !important;
-  width: 148px !important;
+  flex: 0 0 160px !important;
+  width: 160px !important;
   height: 100% !important;
-  padding: 6px !important;
+  padding: 8px !important;
   scroll-snap-align: start !important;
   border-radius: 8px !important;
 }
 body.mobile-landscape-mode .card-header {
-  margin-bottom: 2px !important;
+  margin-bottom: 3px !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
 }
 body.mobile-landscape-mode .lane-badge {
-  font-size: 0.62rem !important;
-  padding: 1px 5px !important;
+  font-size: 12px !important;
+  font-weight: 800 !important;
+  padding: 2px 6px !important;
 }
 body.mobile-landscape-mode .odds-tag {
-  font-size: 0.62rem !important;
+  font-size: 13px !important;
+  font-weight: 800 !important;
+  color: #facc15 !important;
 }
 body.mobile-landscape-mode .card-body {
   gap: 6px !important;
 }
 body.mobile-landscape-mode .swimmer-avatar {
-  font-size: 1.4rem !important;
-  width: 28px !important;
-  height: 28px !important;
+  font-size: 24px !important;
+  width: 32px !important;
+  height: 32px !important;
 }
 body.mobile-landscape-mode .swimmer-name {
-  font-size: 0.78rem !important;
+  font-size: 14px !important;
+  font-weight: 800 !important;
 }
 body.mobile-landscape-mode .swimmer-age {
-  font-size: 0.62rem !important;
+  font-size: 12px !important;
+  color: #94a3b8 !important;
 }
 body.mobile-landscape-mode .swimmer-nick {
   display: none !important;
 }
 body.mobile-landscape-mode .bettor-input-row {
-  margin: 2px 0 !important;
+  margin: 3px 0 !important;
 }
 body.mobile-landscape-mode .bettor-label {
   display: none !important;
 }
 body.mobile-landscape-mode .bettor-name-input {
-  font-size: 0.65rem !important;
-  padding: 2px 4px !important;
+  font-size: 16px !important;
+  padding: 3px 6px !important;
+  height: 30px !important;
   width: 100% !important;
+  border-radius: 6px !important;
+  touch-action: manipulation;
 }
 body.mobile-landscape-mode .fake-stats {
   display: none !important;
 }
 body.mobile-landscape-mode .swimmer-quote {
-  font-size: 0.62rem !important;
-  -webkit-line-clamp: 2 !important;
-  display: -webkit-box !important;
-  -webkit-box-orient: vertical !important;
-  overflow: hidden !important;
+  display: none !important;
 }
 
 body.mobile-landscape-mode .betting-dock {
-  padding: 4px 8px !important;
-  margin-top: 2px !important;
+  padding: 6px 10px !important;
+  margin-top: 4px !important;
   border-radius: 10px !important;
   gap: 8px !important;
   flex-wrap: nowrap !important;
 }
 body.mobile-landscape-mode .dock-summary {
-  min-width: 130px !important;
+  min-width: 140px !important;
 }
 body.mobile-landscape-mode .dock-label {
-  font-size: 0.58rem !important;
+  font-size: 11px !important;
+  color: #94a3b8 !important;
 }
 body.mobile-landscape-mode .dock-target {
-  font-size: 0.8rem !important;
+  font-size: 13px !important;
+  font-weight: 800 !important;
+  white-space: nowrap !important;
 }
 body.mobile-landscape-mode .dock-bettor-input-wrapper {
   display: none !important;
@@ -2357,86 +2487,100 @@ body.mobile-landscape-mode .dock-quote {
   display: none !important;
 }
 body.mobile-landscape-mode .dock-chips {
-  gap: 2px !important;
+  gap: 4px !important;
 }
 body.mobile-landscape-mode .chip-btn {
-  padding: 3px 6px !important;
-  font-size: 0.65rem !important;
+  padding: 5px 8px !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
   border-radius: 6px !important;
+  touch-action: manipulation;
 }
 body.mobile-landscape-mode .dock-inputs {
-  gap: 6px !important;
+  gap: 8px !important;
 }
 body.mobile-landscape-mode .input-group label {
   display: none !important;
 }
 body.mobile-landscape-mode #bet-amount-input {
-  width: 70px !important;
-  padding: 3px 5px !important;
-  font-size: 0.75rem !important;
+  width: 85px !important;
+  height: 34px !important;
+  padding: 4px !important;
+  font-size: 16px !important;
+  font-weight: 800 !important;
+  touch-action: manipulation;
 }
 body.mobile-landscape-mode .potential-win {
   display: none !important;
 }
 body.mobile-landscape-mode .btn-start-race {
-  padding: 6px 12px !important;
-  font-size: 0.78rem !important;
-  border-radius: 8px !important;
+  padding: 8px 16px !important;
+  font-size: 14px !important;
+  font-weight: 800 !important;
+  border-radius: 10px !important;
   white-space: nowrap !important;
+  background: linear-gradient(135deg, #f59e0b 0%, #ea580c 100%) !important;
 }
 
-body.mobile-landscape-mode .overlay-intro {
+body.mobile-landscape-mode .overlay-intro:not(.hidden) {
   top: 42px !important;
-  height: calc(100% - 42px) !important;
+  height: calc(100vh - 42px) !important;
   padding: 6px max(10px, env(safe-area-inset-left)) 6px max(10px, env(safe-area-inset-right)) !important;
+  display: block !important;
 }
 body.mobile-landscape-mode .intro-floating-controls {
   top: 48px !important;
   right: max(10px, env(safe-area-inset-right)) !important;
-  gap: 6px !important;
+  gap: 8px !important;
 }
 body.mobile-landscape-mode .btn-intro-next {
-  padding: 4px 10px !important;
-  font-size: 0.72rem !important;
+  padding: 6px 12px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
   border-radius: 14px !important;
 }
 body.mobile-landscape-mode .btn-intro-skip {
-  padding: 4px 10px !important;
-  font-size: 0.72rem !important;
+  padding: 6px 12px !important;
+  font-size: 13px !important;
+  font-weight: 800 !important;
   border-radius: 14px !important;
 }
 body.mobile-landscape-mode .intro-event-title {
-  font-size: 0.68rem !important;
+  font-size: 12px !important;
   padding: 3px 8px !important;
 }
 body.mobile-landscape-mode .intro-card-dock {
-  max-width: 580px !important;
-  padding: 4px 10px !important;
-  margin: 0 auto 2px !important;
+  max-width: 620px !important;
+  padding: 6px 14px !important;
+  margin: 0 auto 4px !important;
   border-radius: 12px !important;
-  gap: 8px !important;
+  gap: 10px !important;
 }
 body.mobile-landscape-mode .intro-lane-tag {
-  font-size: 0.78rem !important;
-  padding: 3px 6px !important;
+  font-size: 14px !important;
+  font-weight: 800 !important;
+  padding: 3px 8px !important;
 }
 body.mobile-landscape-mode .intro-avatar {
-  font-size: 1.4rem !important;
-  width: 32px !important;
-  height: 32px !important;
+  font-size: 26px !important;
+  width: 36px !important;
+  height: 36px !important;
 }
 body.mobile-landscape-mode .intro-name {
-  font-size: 0.88rem !important;
+  font-size: 16px !important;
+  font-weight: 800 !important;
 }
 body.mobile-landscape-mode .intro-age-gender {
-  font-size: 0.62rem !important;
+  font-size: 13px !important;
 }
 body.mobile-landscape-mode .intro-bettor-badge {
-  font-size: 0.62rem !important;
-  padding: 1px 5px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  padding: 2px 8px !important;
+  color: #facc15 !important;
 }
 body.mobile-landscape-mode .intro-nickname {
-  font-size: 0.62rem !important;
+  font-size: 13px !important;
 }
 body.mobile-landscape-mode .intro-quote {
   display: none !important;
@@ -2446,132 +2590,151 @@ body.mobile-landscape-mode .intro-dock-actions {
 }
 
 body.mobile-landscape-mode .minimap-container {
-  top: 44px !important;
-  width: 50% !important;
+  top: 46px !important;
+  width: 48% !important;
   left: 50% !important;
   transform: translateX(-50%) !important;
-  padding: 3px 6px !important;
+  padding: 3px 8px !important;
   border-radius: 8px !important;
 }
 body.mobile-landscape-mode .minimap-title {
   display: none !important;
 }
 body.mobile-landscape-mode .minimap-scale {
-  font-size: 0.55rem !important;
+  font-size: 11px !important;
 }
 body.mobile-landscape-mode .minimap-track {
-  height: 4px !important;
-  margin-bottom: 1px !important;
+  height: 5px !important;
+  margin-bottom: 2px !important;
 }
 body.mobile-landscape-mode .m-lane-num {
-  font-size: 0.55rem !important;
-  width: 8px !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  width: 12px !important;
 }
 body.mobile-landscape-mode .m-dot {
-  width: 6px !important;
-  height: 6px !important;
+  width: 7px !important;
+  height: 7px !important;
 }
 
 body.mobile-landscape-mode .hud-top-left {
-  top: 44px !important;
+  top: 46px !important;
   left: max(8px, env(safe-area-inset-left)) !important;
-  width: 85px !important;
+  width: 95px !important;
 }
 body.mobile-landscape-mode .live-broadcast-tag {
   display: none !important;
 }
 body.mobile-landscape-mode .timer-card {
-  padding: 2px 5px !important;
+  padding: 3px 6px !important;
   border-radius: 6px !important;
 }
 body.mobile-landscape-mode .timer-label {
-  font-size: 0.5rem !important;
+  font-size: 11px !important;
 }
 body.mobile-landscape-mode .timer-digits {
-  font-size: 0.78rem !important;
+  font-size: 15px !important;
+  font-weight: 800 !important;
+  font-family: monospace !important;
 }
 
 body.mobile-landscape-mode .leaderboard-panel {
-  bottom: 4px !important;
+  bottom: 6px !important;
   left: max(8px, env(safe-area-inset-left)) !important;
-  width: 155px !important;
-  max-height: 105px !important;
-  padding: 4px !important;
+  width: 180px !important;
+  max-height: 120px !important;
+  padding: 4px 6px !important;
   border-radius: 8px !important;
 }
 body.mobile-landscape-mode .lb-header {
-  margin-bottom: 1px !important;
+  margin-bottom: 2px !important;
 }
 body.mobile-landscape-mode .lb-title {
-  font-size: 0.6rem !important;
+  font-size: 12px !important;
+  font-weight: 800 !important;
 }
 body.mobile-landscape-mode .lb-sub {
   display: none !important;
 }
 body.mobile-landscape-mode .lb-row {
-  padding: 1px 2px !important;
-  font-size: 0.6rem !important;
+  padding: 2px 4px !important;
+  font-size: 12px !important;
 }
 body.mobile-landscape-mode .lb-rank {
-  width: 14px !important;
+  width: 16px !important;
+  font-weight: 800 !important;
 }
 body.mobile-landscape-mode .lb-dist {
-  font-size: 0.55rem !important;
+  font-size: 12px !important;
 }
 
 body.mobile-landscape-mode .incident-stack {
-  top: 44px !important;
+  top: 46px !important;
   right: max(8px, env(safe-area-inset-right)) !important;
-  width: 190px !important;
+  width: 210px !important;
   max-width: 32vw !important;
-  gap: 3px !important;
+  gap: 4px !important;
 }
 body.mobile-landscape-mode .incident-feed-card {
-  padding: 4px 6px !important;
-  font-size: 0.62rem !important;
-  gap: 4px !important;
+  padding: 4px 8px !important;
+  font-size: 12px !important;
+  gap: 5px !important;
   border-radius: 6px !important;
 }
 body.mobile-landscape-mode .feed-emoji {
-  font-size: 1.0rem !important;
+  font-size: 16px !important;
 }
 body.mobile-landscape-mode .feed-name {
-  font-size: 0.68rem !important;
+  font-size: 13px !important;
+  font-weight: 800 !important;
 }
 body.mobile-landscape-mode .feed-incident-name {
-  font-size: 0.6rem !important;
+  font-size: 12px !important;
 }
 body.mobile-landscape-mode .feed-comment {
-  font-size: 0.6rem !important;
+  font-size: 12px !important;
 }
+
 body.mobile-landscape-mode .announcement-box {
-  font-size: 1.6rem !important;
-  padding: 8px 16px !important;
+  font-size: 1.8rem !important;
+  padding: 8px 18px !important;
 }
 
 body.mobile-landscape-mode .modal-card {
   max-height: 92vh !important;
   overflow-y: auto !important;
-  padding: 10px 14px !important;
-  max-width: 420px !important;
-  border-radius: 12px !important;
+  padding: 12px 16px !important;
+  max-width: 440px !important;
+  border-radius: 14px !important;
 }
 body.mobile-landscape-mode .result-title {
-  font-size: 1.1rem !important;
+  font-size: 18px !important;
+  font-weight: 900 !important;
 }
 body.mobile-landscape-mode .result-msg {
-  font-size: 0.72rem !important;
+  font-size: 13px !important;
 }
 body.mobile-landscape-mode .podium-step {
-  height: 50px !important;
+  height: 55px !important;
   padding: 4px 2px !important;
+  font-size: 13px !important;
 }
-body.mobile-landscape-mode .podium-swimmer-name {
-  font-size: 0.7rem !important;
+body.mobile-landscape-mode .podium-swimmer {
+  font-size: 13px !important;
+  font-weight: 700 !important;
+}
+body.mobile-landscape-mode .payout-row {
+  font-size: 13px !important;
+}
+body.mobile-landscape-mode .payout-row.highlight {
+  font-size: 16px !important;
+  font-weight: 900 !important;
 }
 body.mobile-landscape-mode .btn-next-race {
-  padding: 6px 10px !important;
-  font-size: 0.85rem !important;
+  padding: 10px !important;
+  font-size: 15px !important;
+  font-weight: 800 !important;
   border-radius: 10px !important;
 }
+
 

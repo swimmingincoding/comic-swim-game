@@ -92,10 +92,11 @@ export class UIManager {
       });
     }
 
-    // 모바일 가로 화면 자동 감지
+    // 모바일 가로 화면 자동 감지 (터치 기기 및 640px 이하 뷰포트)
     const autoDetectMobile = () => {
+      const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
       const isLandscape = window.innerWidth > window.innerHeight;
-      const isMobileSize = (window.innerHeight <= 540) || (window.innerWidth <= 950 && isLandscape);
+      const isMobileSize = (window.innerHeight <= 640) || (window.innerWidth <= 1024 && isLandscape && isTouch);
       if (isMobileSize) {
         document.body.classList.add('mobile-landscape-mode');
       }
@@ -179,7 +180,11 @@ export class UIManager {
     const startBtn = document.getElementById('btn-start-race');
     if (startBtn) {
       startBtn.addEventListener('click', () => {
-        this.callbacks.onStartRace();
+        // 배팅 화면 즉각 차단 (어떤 기기/브라우저 환경에서도 잔류 불가)
+        this.setElementVisible(this.bettingScreen, false);
+        if (this.callbacks.onStartRace) {
+          this.callbacks.onStartRace();
+        }
       });
     }
 
@@ -235,11 +240,28 @@ export class UIManager {
     }
   }
 
+  setElementVisible(el, isVisible, displayType = 'block') {
+    if (!el) return;
+    if (isVisible) {
+      el.classList.remove('hidden');
+      el.style.setProperty('display', displayType, 'important');
+      el.style.setProperty('visibility', 'visible', 'important');
+      el.style.setProperty('opacity', '1', 'important');
+      el.style.setProperty('pointer-events', 'auto', 'important');
+    } else {
+      el.classList.add('hidden');
+      el.style.setProperty('display', 'none', 'important');
+      el.style.setProperty('visibility', 'hidden', 'important');
+      el.style.setProperty('opacity', '0', 'important');
+      el.style.setProperty('pointer-events', 'none', 'important');
+    }
+  }
+
   showBettingScreen(swimmers, selectedLane, betAmount) {
-    this.bettingScreen.classList.remove('hidden');
-    this.introScreen.classList.add('hidden');
-    this.raceHud.classList.add('hidden');
-    this.resultModal.classList.add('hidden');
+    this.setElementVisible(this.bettingScreen, true, 'flex');
+    this.setElementVisible(this.introScreen, false);
+    this.setElementVisible(this.raceHud, false);
+    this.setElementVisible(this.resultModal, false);
     if (this.incidentStack) this.incidentStack.innerHTML = '';
 
     this.currentSelectedLane = selectedLane;
@@ -410,9 +432,10 @@ export class UIManager {
 
   // --- 올림픽 선수 소개 인트로 오버레이 표시 ---
   showIntroScreen(swimmer) {
-    this.bettingScreen.classList.add('hidden');
-    this.introScreen.classList.remove('hidden');
-    this.raceHud.classList.add('hidden');
+    this.setElementVisible(this.bettingScreen, false);
+    this.setElementVisible(this.introScreen, true, 'block');
+    this.setElementVisible(this.raceHud, false);
+    this.setElementVisible(this.resultModal, false);
 
     if (this.introLaneTag) {
       this.introLaneTag.textContent = `LANE ${swimmer.lane}`;
@@ -432,10 +455,10 @@ export class UIManager {
   }
 
   showRaceHUD() {
-    this.bettingScreen.classList.add('hidden');
-    this.introScreen.classList.add('hidden');
-    this.raceHud.classList.remove('hidden');
-    this.resultModal.classList.add('hidden');
+    this.setElementVisible(this.bettingScreen, false);
+    this.setElementVisible(this.introScreen, false);
+    this.setElementVisible(this.raceHud, true, 'block');
+    this.setElementVisible(this.resultModal, false);
     this.buildMinimapLanes();
   }
 
@@ -551,7 +574,7 @@ export class UIManager {
 
   // 경기 결과 모달
   showResultModal({ userLane, userRank, betAmount, winCoins, multiplier, rankedSwimmers, totalCoins }) {
-    this.resultModal.classList.remove('hidden');
+    this.setElementVisible(this.resultModal, true, 'flex');
 
     const titleEl = document.getElementById('result-title');
     const msgEl = document.getElementById('result-msg');
