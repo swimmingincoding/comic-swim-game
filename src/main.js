@@ -1,4 +1,4 @@
-import './style.css';
+import './style.css?v=3';
 import { SceneManager } from './three/SceneManager.js';
 import { UIManager } from './ui/UIManager.js';
 import { GameManager } from './game/GameManager.js';

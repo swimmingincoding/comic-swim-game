@@ -2092,115 +2092,234 @@ body {
   }
 
   /* 4. 경기 진행 HUD 모바일 가로 최적화 */
-  .minimap-container {
-    top: 46px !important;
-    width: 48% !important;
-    left: 50% !important;
-    transform: translateX(-50%) !important;
-    padding: 3px 8px !important;
-    border-radius: 8px !important;
-  }
-  .minimap-title {
-    display: none !important;
-  }
-  .minimap-scale {
-    font-size: 11px !important;
-  }
-  .minimap-track {
-    height: 5px !important;
-    margin-bottom: 2px !important;
-  }
-  .m-lane-num {
-    font-size: 11px !important;
-    font-weight: 700 !important;
-    width: 12px !important;
-  }
-  .m-dot {
-    width: 7px !important;
-    height: 7px !important;
+  .overlay-hud {
+    top: 42px !important;
+    height: calc(100vh - 42px) !important;
+    pointer-events: none !important;
   }
 
+  /* 좌측 상단 초시계: 상단 툴바 바로 아래 4px에 컴팩트 배지 형태로 배치 */
   .hud-top-left {
-    top: 46px !important;
+    top: 4px !important;
     left: max(8px, env(safe-area-inset-left)) !important;
-    width: 95px !important;
+    width: auto !important;
+    z-index: 20 !important;
   }
   .live-broadcast-tag {
     display: none !important;
   }
   .timer-card {
-    padding: 3px 6px !important;
+    padding: 2px 8px !important;
     border-radius: 6px !important;
+    background: rgba(15, 23, 42, 0.8) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 4px !important;
   }
   .timer-label {
-    font-size: 11px !important;
+    display: none !important;
   }
   .timer-digits {
-    font-size: 15px !important;
+    font-size: 14px !important;
     font-weight: 800 !important;
     font-family: monospace !important;
+    color: #facc15 !important;
+    line-height: 1.2 !important;
   }
 
+  /* 가운데 미니맵: 상단 툴바 바로 아래 4px에 초슬림 미니멀 트래커로 축소 (선수 및 레인 시야 100% 확보) */
+  .minimap-container {
+    top: 4px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    width: min(280px, 36vw) !important;
+    max-width: 36vw !important;
+    padding: 2px 6px 3px 6px !important;
+    background: rgba(15, 23, 42, 0.65) !important;
+    backdrop-filter: blur(8px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    border-radius: 6px !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
+  }
+  .minimap-header {
+    margin-bottom: 2px !important;
+  }
+  .minimap-title {
+    display: none !important;
+  }
+  .minimap-scale {
+    font-size: 8px !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    padding: 0 2px 0 10px !important;
+    color: #94a3b8 !important;
+    gap: 0 !important;
+  }
+  .scale-label, .scale-mark {
+    display: none !important;
+  }
+  .minimap-lanes {
+    gap: 1.5px !important;
+  }
+  .minimap-track {
+    height: 4px !important;
+    gap: 3px !important;
+    margin-bottom: 0 !important;
+  }
+  .m-lane-num {
+    font-size: 8px !important;
+    font-weight: 700 !important;
+    width: 7px !important;
+    line-height: 1 !important;
+    color: #94a3b8 !important;
+  }
+  .m-lane-line {
+    height: 2px !important;
+    background: rgba(255, 255, 255, 0.15) !important;
+    border-radius: 1px !important;
+  }
+  .m-dot {
+    width: 5px !important;
+    height: 5px !important;
+    top: -1.5px !important;
+    border: 1px solid #fff !important;
+    box-shadow: 0 0 4px rgba(56, 189, 248, 0.6) !important;
+  }
+  .m-dot.my-bet-dot {
+    width: 7px !important;
+    height: 7px !important;
+    top: -2.5px !important;
+    border: 1.5px solid #fff !important;
+    box-shadow: 0 0 6px var(--accent-gold) !important;
+  }
+
+  /* 우측 상단 돌발상황 스택 피드: 상단 툴바 바로 아래 우측 상단에 정렬 (경기에 방해 안되는 최적화 사이즈) */
+  .incident-stack {
+    top: 4px !important;
+    right: max(8px, env(safe-area-inset-right)) !important;
+    width: min(200px, 28vw) !important;
+    max-width: 28vw !important;
+    gap: 3px !important;
+    z-index: 25 !important;
+    pointer-events: none !important;
+  }
+  .incident-feed-card {
+    padding: 3px 6px !important;
+    font-size: 11px !important;
+    gap: 6px !important;
+    border-radius: 6px !important;
+    border: 1px solid #f87171 !important;
+    background: linear-gradient(135deg, rgba(153, 27, 27, 0.94) 0%, rgba(127, 29, 29, 0.94) 100%) !important;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5) !important;
+  }
+  .feed-left {
+    font-size: 16px !important;
+  }
+  .feed-header {
+    gap: 3px !important;
+    flex-wrap: wrap !important;
+    margin-bottom: 1px !important;
+    line-height: 1.2 !important;
+  }
+  .feed-lane-tag {
+    font-size: 9px !important;
+    padding: 1px 3px !important;
+    border-radius: 3px !important;
+    font-weight: 800 !important;
+  }
+  .feed-name {
+    font-size: 11px !important;
+    font-weight: 800 !important;
+  }
+  .feed-bettor {
+    font-size: 9px !important;
+    color: #facc15 !important;
+    font-weight: 700 !important;
+  }
+  .feed-incident-name {
+    font-size: 10px !important;
+    color: #fca5a5 !important;
+    font-weight: 700 !important;
+  }
+  .feed-comment {
+    font-size: 10px !important;
+    color: #f1f5f9 !important;
+    line-height: 1.2 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 140px !important;
+    margin: 0 !important;
+  }
+
+  /* 좌측 하단 실시간 리더보드 순위표 */
   .leaderboard-panel {
-    bottom: 6px !important;
+    bottom: 4px !important;
     left: max(8px, env(safe-area-inset-left)) !important;
-    width: 180px !important;
-    max-height: 120px !important;
-    padding: 4px 6px !important;
-    border-radius: 8px !important;
+    width: min(155px, 22vw) !important;
+    max-height: min(140px, 48vh) !important;
+    padding: 3px 5px !important;
+    border-radius: 6px !important;
+    background: rgba(15, 23, 42, 0.75) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    overflow: hidden !important;
   }
   .lb-header {
     margin-bottom: 2px !important;
+    padding-bottom: 1px !important;
   }
   .lb-title {
-    font-size: 12px !important;
+    font-size: 10px !important;
     font-weight: 800 !important;
   }
   .lb-sub {
     display: none !important;
   }
-  .lb-row {
-    padding: 2px 4px !important;
-    font-size: 12px !important;
+  .lb-rows {
+    gap: 1.5px !important;
+  }
+  .leaderboard-item {
+    padding: 1px 3px !important;
+    font-size: 9.5px !important;
+    gap: 2px !important;
+    border-radius: 3px !important;
+    height: 13.5px !important;
+    margin-bottom: 1px !important;
   }
   .lb-rank {
-    width: 16px !important;
+    width: 13px !important;
+    font-size: 9.5px !important;
     font-weight: 800 !important;
+  }
+  .lb-lane {
+    font-size: 8.5px !important;
+    padding: 0 2px !important;
+  }
+  .lb-name {
+    font-size: 9.5px !important;
+    max-width: 50px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+  .lb-bettor {
+    display: none !important;
+  }
+  .lb-status {
+    font-size: 8.5px !important;
   }
   .lb-dist {
-    font-size: 12px !important;
-  }
-
-  .incident-stack {
-    top: 46px !important;
-    right: max(8px, env(safe-area-inset-right)) !important;
-    width: 210px !important;
-    max-width: 32vw !important;
-    gap: 4px !important;
-  }
-  .incident-feed-card {
-    padding: 4px 8px !important;
-    font-size: 12px !important;
-    gap: 5px !important;
-    border-radius: 6px !important;
-  }
-  .feed-emoji {
-    font-size: 16px !important;
-  }
-  .feed-name {
-    font-size: 13px !important;
-    font-weight: 800 !important;
-  }
-  .feed-incident-name {
-    font-size: 12px !important;
-  }
-  .feed-comment {
-    font-size: 12px !important;
+    font-size: 9.5px !important;
+    font-weight: 700 !important;
+    margin-left: auto !important;
   }
 
   .announcement-box {
-    font-size: 1.8rem !important;
-    padding: 8px 18px !important;
+    font-size: 1.5rem !important;
+    padding: 6px 14px !important;
+    top: 45% !important;
   }
 
   /* 5. 결과 모달 모바일 가로 최적화 */
@@ -2589,115 +2708,231 @@ body.mobile-landscape-mode .intro-dock-actions {
   display: none !important;
 }
 
-body.mobile-landscape-mode .minimap-container {
-  top: 46px !important;
-  width: 48% !important;
-  left: 50% !important;
-  transform: translateX(-50%) !important;
-  padding: 3px 8px !important;
-  border-radius: 8px !important;
-}
-body.mobile-landscape-mode .minimap-title {
-  display: none !important;
-}
-body.mobile-landscape-mode .minimap-scale {
-  font-size: 11px !important;
-}
-body.mobile-landscape-mode .minimap-track {
-  height: 5px !important;
-  margin-bottom: 2px !important;
-}
-body.mobile-landscape-mode .m-lane-num {
-  font-size: 11px !important;
-  font-weight: 700 !important;
-  width: 12px !important;
-}
-body.mobile-landscape-mode .m-dot {
-  width: 7px !important;
-  height: 7px !important;
+body.mobile-landscape-mode .overlay-hud {
+  top: 42px !important;
+  height: calc(100vh - 42px) !important;
+  pointer-events: none !important;
 }
 
 body.mobile-landscape-mode .hud-top-left {
-  top: 46px !important;
+  top: 4px !important;
   left: max(8px, env(safe-area-inset-left)) !important;
-  width: 95px !important;
+  width: auto !important;
+  z-index: 20 !important;
 }
 body.mobile-landscape-mode .live-broadcast-tag {
   display: none !important;
 }
 body.mobile-landscape-mode .timer-card {
-  padding: 3px 6px !important;
+  padding: 2px 8px !important;
   border-radius: 6px !important;
+  background: rgba(15, 23, 42, 0.8) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
 }
 body.mobile-landscape-mode .timer-label {
-  font-size: 11px !important;
+  display: none !important;
 }
 body.mobile-landscape-mode .timer-digits {
-  font-size: 15px !important;
+  font-size: 14px !important;
   font-weight: 800 !important;
   font-family: monospace !important;
+  color: #facc15 !important;
+  line-height: 1.2 !important;
+}
+
+body.mobile-landscape-mode .minimap-container {
+  top: 4px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  width: min(280px, 36vw) !important;
+  max-width: 36vw !important;
+  padding: 2px 6px 3px 6px !important;
+  background: rgba(15, 23, 42, 0.65) !important;
+  backdrop-filter: blur(8px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 6px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
+}
+body.mobile-landscape-mode .minimap-header {
+  margin-bottom: 2px !important;
+}
+body.mobile-landscape-mode .minimap-title {
+  display: none !important;
+}
+body.mobile-landscape-mode .minimap-scale {
+  font-size: 8px !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  width: 100% !important;
+  padding: 0 2px 0 10px !important;
+  color: #94a3b8 !important;
+  gap: 0 !important;
+}
+body.mobile-landscape-mode .scale-label,
+body.mobile-landscape-mode .scale-mark {
+  display: none !important;
+}
+body.mobile-landscape-mode .minimap-lanes {
+  gap: 1.5px !important;
+}
+body.mobile-landscape-mode .minimap-track {
+  height: 4px !important;
+  gap: 3px !important;
+  margin-bottom: 0 !important;
+}
+body.mobile-landscape-mode .m-lane-num {
+  font-size: 8px !important;
+  font-weight: 700 !important;
+  width: 7px !important;
+  line-height: 1 !important;
+  color: #94a3b8 !important;
+}
+body.mobile-landscape-mode .m-lane-line {
+  height: 2px !important;
+  background: rgba(255, 255, 255, 0.15) !important;
+  border-radius: 1px !important;
+}
+body.mobile-landscape-mode .m-dot {
+  width: 5px !important;
+  height: 5px !important;
+  top: -1.5px !important;
+  border: 1px solid #fff !important;
+  box-shadow: 0 0 4px rgba(56, 189, 248, 0.6) !important;
+}
+body.mobile-landscape-mode .m-dot.my-bet-dot {
+  width: 7px !important;
+  height: 7px !important;
+  top: -2.5px !important;
+  border: 1.5px solid #fff !important;
+  box-shadow: 0 0 6px var(--accent-gold) !important;
+}
+
+body.mobile-landscape-mode .incident-stack {
+  top: 4px !important;
+  right: max(8px, env(safe-area-inset-right)) !important;
+  width: min(200px, 28vw) !important;
+  max-width: 28vw !important;
+  gap: 3px !important;
+  z-index: 25 !important;
+  pointer-events: none !important;
+}
+body.mobile-landscape-mode .incident-feed-card {
+  padding: 3px 6px !important;
+  font-size: 11px !important;
+  gap: 6px !important;
+  border-radius: 6px !important;
+  border: 1px solid #f87171 !important;
+  background: linear-gradient(135deg, rgba(153, 27, 27, 0.94) 0%, rgba(127, 29, 29, 0.94) 100%) !important;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5) !important;
+}
+body.mobile-landscape-mode .feed-left {
+  font-size: 16px !important;
+}
+body.mobile-landscape-mode .feed-header {
+  gap: 3px !important;
+  flex-wrap: wrap !important;
+  margin-bottom: 1px !important;
+  line-height: 1.2 !important;
+}
+body.mobile-landscape-mode .feed-lane-tag {
+  font-size: 9px !important;
+  padding: 1px 3px !important;
+  border-radius: 3px !important;
+  font-weight: 800 !important;
+}
+body.mobile-landscape-mode .feed-name {
+  font-size: 11px !important;
+  font-weight: 800 !important;
+}
+body.mobile-landscape-mode .feed-bettor {
+  font-size: 9px !important;
+  color: #facc15 !important;
+  font-weight: 700 !important;
+}
+body.mobile-landscape-mode .feed-incident-name {
+  font-size: 10px !important;
+  color: #fca5a5 !important;
+  font-weight: 700 !important;
+}
+body.mobile-landscape-mode .feed-comment {
+  font-size: 10px !important;
+  color: #f1f5f9 !important;
+  line-height: 1.2 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  max-width: 140px !important;
+  margin: 0 !important;
 }
 
 body.mobile-landscape-mode .leaderboard-panel {
-  bottom: 6px !important;
+  bottom: 4px !important;
   left: max(8px, env(safe-area-inset-left)) !important;
-  width: 180px !important;
-  max-height: 120px !important;
-  padding: 4px 6px !important;
-  border-radius: 8px !important;
+  width: min(155px, 22vw) !important;
+  max-height: min(140px, 48vh) !important;
+  padding: 3px 5px !important;
+  border-radius: 6px !important;
+  background: rgba(15, 23, 42, 0.75) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  overflow: hidden !important;
 }
 body.mobile-landscape-mode .lb-header {
   margin-bottom: 2px !important;
+  padding-bottom: 1px !important;
 }
 body.mobile-landscape-mode .lb-title {
-  font-size: 12px !important;
+  font-size: 10px !important;
   font-weight: 800 !important;
 }
 body.mobile-landscape-mode .lb-sub {
   display: none !important;
 }
-body.mobile-landscape-mode .lb-row {
-  padding: 2px 4px !important;
-  font-size: 12px !important;
+body.mobile-landscape-mode .lb-rows {
+  gap: 1.5px !important;
+}
+body.mobile-landscape-mode .leaderboard-item {
+  padding: 1px 3px !important;
+  font-size: 9.5px !important;
+  gap: 2px !important;
+  border-radius: 3px !important;
+  height: 13.5px !important;
+  margin-bottom: 1px !important;
 }
 body.mobile-landscape-mode .lb-rank {
-  width: 16px !important;
+  width: 13px !important;
+  font-size: 9.5px !important;
   font-weight: 800 !important;
+}
+body.mobile-landscape-mode .lb-lane {
+  font-size: 8.5px !important;
+  padding: 0 2px !important;
+}
+body.mobile-landscape-mode .lb-name {
+  font-size: 9.5px !important;
+  max-width: 50px !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+body.mobile-landscape-mode .lb-bettor {
+  display: none !important;
+}
+body.mobile-landscape-mode .lb-status {
+  font-size: 8.5px !important;
 }
 body.mobile-landscape-mode .lb-dist {
-  font-size: 12px !important;
-}
-
-body.mobile-landscape-mode .incident-stack {
-  top: 46px !important;
-  right: max(8px, env(safe-area-inset-right)) !important;
-  width: 210px !important;
-  max-width: 32vw !important;
-  gap: 4px !important;
-}
-body.mobile-landscape-mode .incident-feed-card {
-  padding: 4px 8px !important;
-  font-size: 12px !important;
-  gap: 5px !important;
-  border-radius: 6px !important;
-}
-body.mobile-landscape-mode .feed-emoji {
-  font-size: 16px !important;
-}
-body.mobile-landscape-mode .feed-name {
-  font-size: 13px !important;
-  font-weight: 800 !important;
-}
-body.mobile-landscape-mode .feed-incident-name {
-  font-size: 12px !important;
-}
-body.mobile-landscape-mode .feed-comment {
-  font-size: 12px !important;
+  font-size: 9.5px !important;
+  font-weight: 700 !important;
+  margin-left: auto !important;
 }
 
 body.mobile-landscape-mode .announcement-box {
-  font-size: 1.8rem !important;
-  padding: 8px 18px !important;
+  font-size: 1.5rem !important;
+  padding: 6px 14px !important;
+  top: 45% !important;
 }
 
 body.mobile-landscape-mode .modal-card {

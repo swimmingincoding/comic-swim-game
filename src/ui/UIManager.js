@@ -502,7 +502,6 @@ export class UIManager {
 
     const alertCard = document.createElement('div');
     alertCard.className = 'incident-feed-card slide-in-feed';
-    alertCard.style.cssText = 'width: 100% !important; max-width: 380px !important; box-sizing: border-box !important; margin: 0 0 0 auto !important; background: linear-gradient(135deg, rgba(153, 27, 27, 0.95) 0%, rgba(127, 29, 29, 0.95) 100%) !important; border: 1.5px solid #f87171 !important; border-radius: 12px !important; padding: 10px 16px !important; backdrop-filter: blur(12px) !important; box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4) !important; display: flex !important; align-items: center !important; gap: 14px !important;';
     alertCard.innerHTML = `
       <div class="feed-left">
         <span class="feed-emoji">${incident.emoji}</span>
