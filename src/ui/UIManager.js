@@ -297,14 +297,22 @@ export class UIManager {
     this.bettorQuickContainer.innerHTML = '';
 
     swimmers.forEach(s => {
+      const isSelected = (s.lane === this.currentSelectedLane);
       const item = document.createElement('div');
-      item.className = 'registry-item';
+      item.className = `registry-item ${isSelected ? 'selected-bet-lane' : ''}`;
+      item.dataset.lane = s.lane;
       item.innerHTML = `
-        <div class="reg-lane-label">
+        <div class="reg-lane-label" title="터치하여 ${s.lane}번 레인을 배팅 선수로 선택">
           <span class="lane-tag-${s.lane}">L${s.lane} ${s.name}</span>
         </div>
         <input type="text" class="reg-lane-input" data-lane="${s.lane}" placeholder="이름 입력" value="${s.bettorName || ''}">
       `;
+
+      // 라벨 터치 시 해당 레인 배팅 선수로 즉시 선택!
+      const label = item.querySelector('.reg-lane-label');
+      label.addEventListener('click', () => {
+        this.callbacks.onSelectLane(s.lane);
+      });
 
       const input = item.querySelector('.reg-lane-input');
       input.addEventListener('input', (e) => {
@@ -412,6 +420,18 @@ export class UIManager {
     cards.forEach(c => {
       c.classList.toggle('selected', parseInt(c.dataset.lane) === lane);
     });
+
+    // 상단 8인 바 선택 하이라이트 동기화
+    const regItems = this.bettorQuickContainer?.querySelectorAll('.registry-item');
+    regItems?.forEach(item => {
+      const iLane = parseInt(item.dataset.lane, 10);
+      item.classList.toggle('selected-bet-lane', iLane === lane);
+    });
+
+    const swimmer = SWIMMERS_DATA ? SWIMMERS_DATA.find(s => s.lane === lane) : null;
+    if (swimmer) {
+      this.updateSelectedCardInfo(swimmer);
+    }
     this.updatePotentialWin();
   }
 

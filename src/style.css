@@ -386,6 +386,18 @@ body {
   padding: 5px 8px;
   border-radius: 8px;
   border: 1px solid var(--border-glass);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.registry-item.selected-bet-lane {
+  border-color: var(--accent-gold);
+  background: rgba(250, 204, 21, 0.22);
+  box-shadow: 0 0 10px rgba(250, 204, 21, 0.45);
+}
+
+.registry-item.selected-bet-lane .reg-lane-label {
+  color: var(--accent-gold);
 }
 
 .reg-lane-label {
@@ -393,6 +405,8 @@ body {
   justify-content: space-between;
   font-size: 0.68rem;
   font-weight: 800;
+  cursor: pointer;
+  user-select: none;
 }
 
 .reg-lane-input {
@@ -1862,63 +1876,69 @@ body {
    화면 높이 620px 이하, 모바일 가로 모드, 또는 시뮬레이터 활성화 시 적용
    ========================================================================== */
 @media (max-height: 620px), (max-width: 950px) and (orientation: landscape), (pointer: coarse) and (max-height: 680px) {
-  /* 1. 상단 글로벌 헤더 슬림화 (42px) */
+  /* 1. 상단 글로벌 헤더 슬림화 (36px) & 우측 버튼 잘림 방지 */
   #global-header {
-    height: 42px !important;
-    padding: 0 max(12px, env(safe-area-inset-left)) 0 max(12px, env(safe-area-inset-right)) !important;
+    height: 36px !important;
+    padding: 0 max(6px, env(safe-area-inset-left)) 0 max(6px, env(safe-area-inset-right)) !important;
   }
   .game-subtitle {
     display: none !important;
   }
   .game-title {
-    font-size: 14px !important;
-    gap: 4px !important;
+    font-size: 12px !important;
+    gap: 3px !important;
     white-space: nowrap !important;
   }
   .olympic-rings {
-    font-size: 13px !important;
+    font-size: 11px !important;
   }
   .badge-live {
-    font-size: 10px !important;
-    padding: 2px 4px !important;
+    font-size: 9px !important;
+    padding: 1px 3px !important;
   }
   .toolbar-label {
     display: none !important;
   }
   .camera-toolbar {
-    gap: 4px !important;
+    gap: 2px !important;
   }
   .camera-toolbar .cam-btn {
-    padding: 4px 8px !important;
-    font-size: 12px !important;
+    padding: 2px 5px !important;
+    font-size: 10.5px !important;
     font-weight: 700 !important;
-    border-radius: 6px !important;
+    border-radius: 5px !important;
     white-space: nowrap !important;
   }
+  .header-right {
+    gap: 3px !important;
+    flex-shrink: 0 !important;
+  }
   .wallet-badge {
-    padding: 3px 8px !important;
-    font-size: 13px !important;
-    gap: 4px !important;
+    padding: 2px 5px !important;
+    font-size: 11px !important;
+    gap: 3px !important;
   }
   .coin-icon {
-    font-size: 14px !important;
-  }
-  .refill-btn {
-    width: 20px !important;
-    height: 20px !important;
     font-size: 12px !important;
   }
+  .refill-btn {
+    width: 17px !important;
+    height: 17px !important;
+    font-size: 11px !important;
+  }
   .icon-btn {
-    width: 32px !important;
-    height: 32px !important;
-    font-size: 15px !important;
+    width: 26px !important;
+    height: 26px !important;
+    font-size: 12px !important;
+    padding: 0 !important;
+    flex-shrink: 0 !important;
   }
 
   /* 2. 배팅 화면 슬림 & 스와이프 레이아웃 */
   .overlay-screen:not(.hidden) {
-    top: 42px !important;
-    height: calc(100vh - 42px) !important;
-    padding: 4px max(10px, env(safe-area-inset-left)) 4px max(10px, env(safe-area-inset-right)) !important;
+    top: 36px !important;
+    height: calc(100vh - 36px) !important;
+    padding: 4px max(8px, env(safe-area-inset-left)) 4px max(8px, env(safe-area-inset-right)) !important;
     overflow-y: auto !important;
     display: flex !important;
     flex-direction: column !important;
@@ -1933,14 +1953,7 @@ body {
     gap: 4px !important;
   }
   .betting-headline {
-    margin-bottom: 2px !important;
-  }
-  .section-title {
-    font-size: 15px !important;
-    font-weight: 800 !important;
-  }
-  .section-desc {
-    display: none !important;
+    display: none !important; /* 상단 헤더와의 겹침 제거 */
   }
 
   /* 8인 빠른 내기 등록 바 컴팩트화 & 가독성 향상 */
@@ -2157,64 +2170,86 @@ body {
 
   /* 3. 올림픽 선수 소개 인트로 모바일 가로 최적화 */
   .overlay-intro:not(.hidden) {
-    top: 42px !important;
-    height: calc(100vh - 42px) !important;
-    padding: 6px max(10px, env(safe-area-inset-left)) 6px max(10px, env(safe-area-inset-right)) !important;
+    top: 36px !important;
+    height: calc(100vh - 36px) !important;
+    padding: 0 !important;
     display: block !important;
+    pointer-events: none !important;
+  }
+  .intro-header {
+    position: absolute !important;
+    top: 40px !important;
+    left: max(8px, env(safe-area-inset-left)) !important;
+    margin: 0 !important;
+    z-index: 10 !important;
+  }
+  .intro-event-title {
+    font-size: 11px !important;
+    padding: 2px 7px !important;
+    background: rgba(15, 23, 42, 0.8) !important;
+    border-radius: 12px !important;
   }
   .intro-floating-controls {
-    top: 48px !important;
-    right: max(10px, env(safe-area-inset-right)) !important;
-    gap: 8px !important;
+    position: absolute !important;
+    top: 38px !important;
+    right: max(8px, env(safe-area-inset-right)) !important;
+    gap: 6px !important;
+    z-index: 100 !important;
   }
   .btn-intro-next {
-    padding: 6px 12px !important;
-    font-size: 13px !important;
+    padding: 4px 10px !important;
+    font-size: 11.5px !important;
     font-weight: 700 !important;
     border-radius: 14px !important;
   }
   .btn-intro-skip {
-    padding: 6px 12px !important;
-    font-size: 13px !important;
+    padding: 4px 12px !important;
+    font-size: 12px !important;
     font-weight: 800 !important;
     border-radius: 14px !important;
   }
-  .intro-event-title {
-    font-size: 12px !important;
-    padding: 3px 8px !important;
-  }
+  /* 올림픽 TV 중계 그래픽(Lower-Third): 좌측 하단 배치로 3D 선수 시야 100% 확보 */
   .intro-card-dock {
-    max-width: 620px !important;
-    padding: 6px 14px !important;
-    margin: 0 auto 4px !important;
-    border-radius: 12px !important;
-    gap: 10px !important;
+    position: absolute !important;
+    bottom: max(6px, env(safe-area-inset-bottom)) !important;
+    left: max(8px, env(safe-area-inset-left)) !important;
+    right: auto !important;
+    margin: 0 !important;
+    max-width: min(440px, 68vw) !important;
+    padding: 4px 10px !important;
+    border-radius: 10px !important;
+    gap: 8px !important;
+    background: rgba(15, 23, 42, 0.92) !important;
+    backdrop-filter: blur(12px) !important;
+    border: 1.5px solid rgba(56, 189, 248, 0.7) !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6) !important;
   }
   .intro-lane-tag {
-    font-size: 14px !important;
+    font-size: 12px !important;
     font-weight: 800 !important;
-    padding: 3px 8px !important;
+    padding: 2px 6px !important;
   }
   .intro-avatar {
-    font-size: 26px !important;
-    width: 36px !important;
-    height: 36px !important;
+    font-size: 22px !important;
+    width: 30px !important;
+    height: 30px !important;
   }
   .intro-name {
-    font-size: 16px !important;
+    font-size: 14px !important;
     font-weight: 800 !important;
   }
   .intro-age-gender {
-    font-size: 13px !important;
+    font-size: 11px !important;
   }
   .intro-bettor-badge {
-    font-size: 13px !important;
+    font-size: 11px !important;
     font-weight: 700 !important;
-    padding: 2px 8px !important;
+    padding: 1px 6px !important;
     color: #facc15 !important;
   }
   .intro-nickname {
-    font-size: 13px !important;
+    font-size: 11px !important;
+    color: #93c5fd !important;
   }
   .intro-quote {
     display: none !important;
@@ -2225,15 +2260,15 @@ body {
 
   /* 4. 경기 진행 HUD 모바일 가로 최적화 */
   .overlay-hud {
-    top: 42px !important;
-    height: calc(100vh - 42px) !important;
+    top: 36px !important;
+    height: calc(100vh - 36px) !important;
     pointer-events: none !important;
   }
 
-  /* 좌측 상단 초시계: 상단 툴바 바로 아래 4px에 컴팩트 배지 형태로 배치 */
+  /* 좌측 상단 초시계: 상단 툴바 바로 아래 컴팩트 배지 형태로 배치 */
   .hud-top-left {
-    top: 4px !important;
-    left: max(8px, env(safe-area-inset-left)) !important;
+    top: 2px !important;
+    left: max(6px, env(safe-area-inset-left)) !important;
     width: auto !important;
     z-index: 20 !important;
   }
@@ -2241,23 +2276,25 @@ body {
     display: none !important;
   }
   .timer-card {
-    padding: 2px 8px !important;
-    border-radius: 6px !important;
-    background: rgba(15, 23, 42, 0.8) !important;
-    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    padding: 1px 6px !important;
+    border-radius: 4px !important;
+    background: rgba(15, 23, 42, 0.85) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    height: 18px !important;
+    box-sizing: border-box !important;
     display: flex !important;
     align-items: center !important;
-    gap: 4px !important;
+    gap: 3px !important;
   }
   .timer-label {
     display: none !important;
   }
   .timer-digits {
-    font-size: 14px !important;
+    font-size: 12px !important;
     font-weight: 800 !important;
     font-family: monospace !important;
     color: #facc15 !important;
-    line-height: 1.2 !important;
+    line-height: 1 !important;
   }
 
   /* 가운데 미니맵: 상단 툴바 바로 아래 4px에 초슬림 미니멀 트래커로 축소 (선수 및 레인 시야 100% 확보) */
@@ -2409,12 +2446,13 @@ body {
     margin: 0 !important;
   }
 
-  /* 좌측 하단 실시간 리더보드 순위표: 8명 전원(1~8위) 한눈에 표시 */
+  /* 좌측 하단 실시간 리더보드 순위표: 타이머 바로 아래부터 정렬하여 겹침 0% */
   .leaderboard-panel {
-    bottom: 4px !important;
+    top: 22px !important;
+    bottom: auto !important;
     left: max(6px, env(safe-area-inset-left)) !important;
     width: min(175px, 24vw) !important;
-    max-height: calc(100vh - 46px) !important;
+    max-height: calc(100vh - 66px) !important;
     padding: 2px 4px !important;
     border-radius: 6px !important;
     background: rgba(15, 23, 42, 0.85) !important;
@@ -2530,19 +2568,20 @@ body {
   .result-msg {
     font-size: 11px !important;
     line-height: 1.2 !important;
-    margin: 0 !important;
+    margin: 2px 0 4px 0 !important;
   }
   .result-podium {
-    height: 65px !important;
-    margin: 3px 0 !important;
+    height: 85px !important;
+    margin: 6px 0 3px 0 !important;
     gap: 6px !important;
   }
   .podium-col {
     width: 78px !important;
   }
   .podium-crown {
-    font-size: 1.1rem !important;
+    font-size: 0.95rem !important;
     margin-bottom: 1px !important;
+    animation: crown-float-mobile 2s infinite ease-in-out !important;
   }
   .podium-swimmer {
     font-size: 10px !important;
@@ -2644,54 +2683,67 @@ body.mobile-landscape-mode #global-header {
 body.mobile-landscape-mode .game-subtitle {
   display: none !important;
 }
+body.mobile-landscape-mode #global-header {
+  height: 36px !important;
+  padding: 0 max(6px, env(safe-area-inset-left)) 0 max(6px, env(safe-area-inset-right)) !important;
+}
+body.mobile-landscape-mode .game-subtitle {
+  display: none !important;
+}
 body.mobile-landscape-mode .game-title {
-  font-size: 14px !important;
-  gap: 4px !important;
+  font-size: 12px !important;
+  gap: 3px !important;
   white-space: nowrap !important;
 }
 body.mobile-landscape-mode .olympic-rings {
-  font-size: 13px !important;
+  font-size: 11px !important;
 }
 body.mobile-landscape-mode .badge-live {
-  font-size: 10px !important;
-  padding: 2px 4px !important;
+  font-size: 9px !important;
+  padding: 1px 3px !important;
 }
 body.mobile-landscape-mode .toolbar-label {
   display: none !important;
 }
 body.mobile-landscape-mode .camera-toolbar {
-  gap: 4px !important;
+  gap: 2px !important;
 }
 body.mobile-landscape-mode .camera-toolbar .cam-btn {
-  padding: 4px 8px !important;
-  font-size: 12px !important;
+  padding: 2px 5px !important;
+  font-size: 10.5px !important;
   font-weight: 700 !important;
-  border-radius: 6px !important;
+  border-radius: 5px !important;
   white-space: nowrap !important;
 }
+body.mobile-landscape-mode .header-right {
+  gap: 3px !important;
+  flex-shrink: 0 !important;
+}
 body.mobile-landscape-mode .wallet-badge {
-  padding: 3px 8px !important;
-  font-size: 13px !important;
-  gap: 4px !important;
+  padding: 2px 5px !important;
+  font-size: 11px !important;
+  gap: 3px !important;
 }
 body.mobile-landscape-mode .coin-icon {
-  font-size: 14px !important;
-}
-body.mobile-landscape-mode .refill-btn {
-  width: 20px !important;
-  height: 20px !important;
   font-size: 12px !important;
 }
+body.mobile-landscape-mode .refill-btn {
+  width: 17px !important;
+  height: 17px !important;
+  font-size: 11px !important;
+}
 body.mobile-landscape-mode .icon-btn {
-  width: 32px !important;
-  height: 32px !important;
-  font-size: 15px !important;
+  width: 26px !important;
+  height: 26px !important;
+  font-size: 12px !important;
+  padding: 0 !important;
+  flex-shrink: 0 !important;
 }
 
 body.mobile-landscape-mode .overlay-screen:not(.hidden) {
-  top: 42px !important;
-  height: calc(100vh - 42px) !important;
-  padding: 4px max(10px, env(safe-area-inset-left)) 4px max(10px, env(safe-area-inset-right)) !important;
+  top: 36px !important;
+  height: calc(100vh - 36px) !important;
+  padding: 4px max(8px, env(safe-area-inset-left)) 4px max(8px, env(safe-area-inset-right)) !important;
   overflow-y: auto !important;
   display: flex !important;
   flex-direction: column !important;
@@ -2706,7 +2758,7 @@ body.mobile-landscape-mode .betting-container {
   gap: 4px !important;
 }
 body.mobile-landscape-mode .betting-headline {
-  margin-bottom: 2px !important;
+  display: none !important;
 }
 body.mobile-landscape-mode .section-title {
   font-size: 15px !important;
@@ -2926,64 +2978,85 @@ body.mobile-landscape-mode .btn-start-race {
 }
 
 body.mobile-landscape-mode .overlay-intro:not(.hidden) {
-  top: 42px !important;
-  height: calc(100vh - 42px) !important;
-  padding: 6px max(10px, env(safe-area-inset-left)) 6px max(10px, env(safe-area-inset-right)) !important;
+  top: 36px !important;
+  height: calc(100vh - 36px) !important;
+  padding: 0 !important;
   display: block !important;
+  pointer-events: none !important;
 }
 body.mobile-landscape-mode .intro-floating-controls {
-  top: 48px !important;
-  right: max(10px, env(safe-area-inset-right)) !important;
-  gap: 8px !important;
+  position: absolute !important;
+  top: 38px !important;
+  right: max(8px, env(safe-area-inset-right)) !important;
+  gap: 6px !important;
+  z-index: 100 !important;
 }
 body.mobile-landscape-mode .btn-intro-next {
-  padding: 6px 12px !important;
-  font-size: 13px !important;
+  padding: 4px 10px !important;
+  font-size: 11.5px !important;
   font-weight: 700 !important;
   border-radius: 14px !important;
 }
 body.mobile-landscape-mode .btn-intro-skip {
-  padding: 6px 12px !important;
-  font-size: 13px !important;
+  padding: 4px 12px !important;
+  font-size: 12px !important;
   font-weight: 800 !important;
   border-radius: 14px !important;
 }
+body.mobile-landscape-mode .intro-header {
+  position: absolute !important;
+  top: 40px !important;
+  left: max(8px, env(safe-area-inset-left)) !important;
+  margin: 0 !important;
+  z-index: 10 !important;
+}
 body.mobile-landscape-mode .intro-event-title {
-  font-size: 12px !important;
-  padding: 3px 8px !important;
+  font-size: 11px !important;
+  padding: 2px 7px !important;
+  background: rgba(15, 23, 42, 0.8) !important;
+  border-radius: 12px !important;
 }
 body.mobile-landscape-mode .intro-card-dock {
-  max-width: 620px !important;
-  padding: 6px 14px !important;
-  margin: 0 auto 4px !important;
-  border-radius: 12px !important;
-  gap: 10px !important;
+  position: absolute !important;
+  bottom: max(6px, env(safe-area-inset-bottom)) !important;
+  left: max(8px, env(safe-area-inset-left)) !important;
+  right: auto !important;
+  margin: 0 !important;
+  max-width: min(440px, 68vw) !important;
+  padding: 4px 10px !important;
+  border-radius: 10px !important;
+  gap: 8px !important;
+  background: rgba(15, 23, 42, 0.92) !important;
+  backdrop-filter: blur(12px) !important;
+  border: 1.5px solid rgba(56, 189, 248, 0.7) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6) !important;
 }
 body.mobile-landscape-mode .intro-lane-tag {
-  font-size: 14px !important;
+  font-size: 12px !important;
   font-weight: 800 !important;
-  padding: 3px 8px !important;
+  padding: 2px 6px !important;
 }
 body.mobile-landscape-mode .intro-avatar {
-  font-size: 26px !important;
-  width: 36px !important;
-  height: 36px !important;
+  font-size: 22px !important;
+  width: 30px !important;
+  height: 30px !important;
 }
 body.mobile-landscape-mode .intro-name {
-  font-size: 16px !important;
+  font-size: 14px !important;
   font-weight: 800 !important;
 }
 body.mobile-landscape-mode .intro-age-gender {
-  font-size: 13px !important;
+  font-size: 11px !important;
 }
 body.mobile-landscape-mode .intro-bettor-badge {
-  font-size: 13px !important;
+  font-size: 11px !important;
   font-weight: 700 !important;
-  padding: 2px 8px !important;
+  padding: 1px 6px !important;
   color: #facc15 !important;
 }
 body.mobile-landscape-mode .intro-nickname {
-  font-size: 13px !important;
+  font-size: 11px !important;
+  color: #93c5fd !important;
 }
 body.mobile-landscape-mode .intro-quote {
   display: none !important;
@@ -2993,14 +3066,14 @@ body.mobile-landscape-mode .intro-dock-actions {
 }
 
 body.mobile-landscape-mode .overlay-hud {
-  top: 42px !important;
-  height: calc(100vh - 42px) !important;
+  top: 36px !important;
+  height: calc(100vh - 36px) !important;
   pointer-events: none !important;
 }
 
 body.mobile-landscape-mode .hud-top-left {
-  top: 4px !important;
-  left: max(8px, env(safe-area-inset-left)) !important;
+  top: 2px !important;
+  left: max(6px, env(safe-area-inset-left)) !important;
   width: auto !important;
   z-index: 20 !important;
 }
@@ -3008,23 +3081,25 @@ body.mobile-landscape-mode .live-broadcast-tag {
   display: none !important;
 }
 body.mobile-landscape-mode .timer-card {
-  padding: 2px 8px !important;
-  border-radius: 6px !important;
-  background: rgba(15, 23, 42, 0.8) !important;
-  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  padding: 1px 6px !important;
+  border-radius: 4px !important;
+  background: rgba(15, 23, 42, 0.85) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  height: 18px !important;
+  box-sizing: border-box !important;
   display: flex !important;
   align-items: center !important;
-  gap: 4px !important;
+  gap: 3px !important;
 }
 body.mobile-landscape-mode .timer-label {
   display: none !important;
 }
 body.mobile-landscape-mode .timer-digits {
-  font-size: 14px !important;
+  font-size: 12px !important;
   font-weight: 800 !important;
   font-family: monospace !important;
   color: #facc15 !important;
-  line-height: 1.2 !important;
+  line-height: 1 !important;
 }
 
 body.mobile-landscape-mode .minimap-container {
@@ -3176,10 +3251,11 @@ body.mobile-landscape-mode .feed-comment {
 }
 
 body.mobile-landscape-mode .leaderboard-panel {
-  bottom: 4px !important;
+  top: 22px !important;
+  bottom: auto !important;
   left: max(6px, env(safe-area-inset-left)) !important;
   width: min(175px, 24vw) !important;
-  max-height: calc(100vh - 46px) !important;
+  max-height: calc(100vh - 66px) !important;
   padding: 2px 4px !important;
   border-radius: 6px !important;
   background: rgba(15, 23, 42, 0.85) !important;
@@ -3295,19 +3371,20 @@ body.mobile-landscape-mode .result-title {
 body.mobile-landscape-mode .result-msg {
   font-size: 11px !important;
   line-height: 1.2 !important;
-  margin: 0 !important;
+  margin: 2px 0 4px 0 !important;
 }
 body.mobile-landscape-mode .result-podium {
-  height: 65px !important;
-  margin: 3px 0 !important;
+  height: 85px !important;
+  margin: 6px 0 3px 0 !important;
   gap: 6px !important;
 }
 body.mobile-landscape-mode .podium-col {
   width: 78px !important;
 }
 body.mobile-landscape-mode .podium-crown {
-  font-size: 1.1rem !important;
+  font-size: 0.95rem !important;
   margin-bottom: 1px !important;
+  animation: crown-float-mobile 2s infinite ease-in-out !important;
 }
 body.mobile-landscape-mode .podium-swimmer {
   font-size: 10px !important;
