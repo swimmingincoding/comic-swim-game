@@ -41,6 +41,9 @@ function init() {
     onChangeCamera: (mode) => {
       sceneManager.setCameraMode(mode);
     },
+    onFocusSwimmer: (lane) => {
+      sceneManager.focusSwimmerTemporarily(lane, 3.0);
+    },
     onMuteToggle: () => {
       return soundManager.toggleMute();
     },

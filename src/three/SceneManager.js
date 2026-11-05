@@ -65,6 +65,23 @@ export class SceneManager {
     this.betLane = lane;
   }
 
+  // 돌발 상황 발생 시 해당 선수를 2.8초간 클로즈업 후 이전 카메라로 복귀
+  focusSwimmerTemporarily(lane, duration = 2.8) {
+    const prevMode = this.cameraMode;
+    const prevLane = this.betLane;
+
+    this.betLane = lane;
+    this.setCameraMode('MY_BET');
+
+    if (this.focusTimerId) clearTimeout(this.focusTimerId);
+    this.focusTimerId = setTimeout(() => {
+      if (this.cameraMode === 'MY_BET' && this.betLane === lane) {
+        this.betLane = prevLane;
+        this.setCameraMode(prevMode);
+      }
+    }, duration * 1000);
+  }
+
   setIntroLane(lane) {
     this.introLane = lane;
     const introSwimmer = this.getSwimmerByLane(lane);

@@ -44,8 +44,8 @@ export class UIManager {
     this.currentSelectedLane = 4;
   }
 
-  setCallbacks({ onSelectLane, onSetBetAmount, onSetBettorName, onStartRace, onNextIntro, onSkipIntro, onResetRace, onChangeCamera, onMuteToggle, onRefillCoins }) {
-    this.callbacks = { onSelectLane, onSetBetAmount, onSetBettorName, onStartRace, onNextIntro, onSkipIntro, onResetRace, onChangeCamera, onMuteToggle, onRefillCoins };
+  setCallbacks({ onSelectLane, onSetBetAmount, onSetBettorName, onStartRace, onNextIntro, onSkipIntro, onResetRace, onChangeCamera, onMuteToggle, onRefillCoins, onFocusSwimmer }) {
+    this.callbacks = { onSelectLane, onSetBetAmount, onSetBettorName, onStartRace, onNextIntro, onSkipIntro, onResetRace, onChangeCamera, onMuteToggle, onRefillCoins, onFocusSwimmer };
     this.bindEvents();
   }
 
@@ -126,6 +126,27 @@ export class UIManager {
           this.syncBettorInputs(lane, sample);
         }
         soundManager.playClick();
+      });
+    }
+
+    // 8인 명단 일괄 입력 버튼 (쉼표로 구분하여 한번에 세팅)
+    const batchPasteBtn = document.getElementById('btn-batch-paste-bettors');
+    if (batchPasteBtn) {
+      batchPasteBtn.addEventListener('click', () => {
+        const input = prompt("쉼표(,)나 줄바꿈으로 8명의 참가자 이름을 입력하세요:\n(예: 지훈, 수진, 현우, 민아, 승우, 은지, 도현, 태희)");
+        if (input && input.trim()) {
+          const names = input.split(/[,，\n]+/).map(n => n.trim()).filter(n => n.length > 0);
+          if (names.length > 0) {
+            for (let lane = 1; lane <= 8; lane++) {
+              const name = names[lane - 1] || "";
+              if (name) {
+                this.callbacks.onSetBettorName(lane, name);
+                this.syncBettorInputs(lane, name);
+              }
+            }
+            soundManager.playClick();
+          }
+        }
       });
     }
 
@@ -517,6 +538,15 @@ export class UIManager {
       </div>
     `;
 
+    alertCard.style.cursor = 'pointer';
+    alertCard.title = '탭하여 이 선수의 돌발 상황 클로즈업!';
+    alertCard.addEventListener('click', () => {
+      if (this.callbacks.onFocusSwimmer) {
+        this.callbacks.onFocusSwimmer(lane);
+        soundManager.playClick();
+      }
+    });
+
     this.incidentStack.appendChild(alertCard);
 
     // 3.8초 동안 유지 후 부드럽게 퇴장 (다음 돌발 상황과 겹침 원천 차단)
@@ -646,6 +676,35 @@ export class UIManager {
           ${b3}
           <div class="podium-swimmer">${s3 ? s3.data.flag : ''} ${s3 ? s3.data.name : ''}</div>
           <div class="podium-step step-3">3위 (L${s3 ? s3.lane : ''})</div>
+        </div>
+      `;
+    }
+
+    // 8위(최하위 꼴찌) 내기 벌칙 당첨자 특별 박제 카드
+    const penaltyEl = document.getElementById('result-penalty-box');
+    if (penaltyEl && rankedSwimmers.length >= 8) {
+      const loser = rankedSwimmers[rankedSwimmers.length - 1]; // 8등 최하위
+      const loserBettor = loser?.data.bettorName ? loser.data.bettorName : '익명의 배터';
+      const loserSwimmer = `${loser?.data.flag || '🏊'} ${loser?.data.name || ''} (L${loser?.lane || ''})`;
+      const incidentDesc = loser?.incident ? `${loser.incident.emoji} ${loser.incident.name}` : '체력 방전 거북이 수영';
+      const isUserLoser = (loser?.lane === userLane);
+
+      penaltyEl.innerHTML = `
+        <div class="penalty-badge">☕ 오늘의 내기 꼴찌 벌칙 당첨자 (8등 최하위) 💸</div>
+        <div class="penalty-card-inner ${isUserLoser ? 'penalty-my-bet' : ''}">
+          <div class="penalty-left-icon">😈</div>
+          <div class="penalty-body">
+            <div class="penalty-target-row">
+              <span class="penalty-bettor-name">🏷️ 【 ${loserBettor} 】 당첨!</span>
+              <span class="penalty-swimmer-name">${loserSwimmer}</span>
+            </div>
+            <div class="penalty-reason">
+              💥 사유: <strong>${incidentDesc}</strong>의 늪에 빠져 끝내 8등 침몰!
+            </div>
+            <div class="penalty-quote">
+              ${isUserLoser ? '😱 "아이고 배터님! 오늘 커피/벌칙은 당신의 몫입니다... ☕"' : '🎉 "축하합니다(?) 오늘의 커피/벌칙 잘 마시겠습니다! ☕"'}
+            </div>
+          </div>
         </div>
       `;
     }

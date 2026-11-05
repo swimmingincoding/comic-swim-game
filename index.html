@@ -80,7 +80,10 @@
             <strong>내기 참가자 명단 등록 (친구/동료 이름 입력)</strong>
             <span class="registry-desc">각 레인에 배팅한 사람의 이름을 적어주세요! 경기 중 순위표와 자막에 표시됩니다.</span>
           </div>
-          <button id="btn-auto-fill-bettors" class="btn-auto-fill" title="철수, 영희, 부장님 등 예시 이름으로 자동 채우기">🎲 예시 이름 자동 채우기</button>
+          <div class="registry-actions">
+            <button id="btn-batch-paste-bettors" class="btn-batch-paste" title="쉼표로 8명 이름 한번에 붙여넣기">📋 명단 일괄 입력</button>
+            <button id="btn-auto-fill-bettors" class="btn-auto-fill" title="철수, 영희, 부장님 등 예시 이름으로 자동 채우기">🎲 예시 이름 채우기</button>
+          </div>
         </div>
         <div id="bettor-quick-inputs" class="registry-inputs-grid">
           <!-- JS에서 레인 1~8 인풋 8개 동적 생성 -->
@@ -222,6 +225,11 @@
 
       <!-- 1, 2, 3위 시상대 포디움 -->
       <div id="result-podium" class="result-podium">
+        <!-- JS 렌더링 -->
+      </div>
+
+      <!-- 😈 오늘의 8위 꼴찌 벌칙 당첨자 박제 배너 (커피/밥 쏘기) -->
+      <div id="result-penalty-box" class="penalty-box">
         <!-- JS 렌더링 -->
       </div>
 

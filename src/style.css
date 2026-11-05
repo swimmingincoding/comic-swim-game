@@ -328,6 +328,31 @@ body {
   margin-left: 6px;
 }
 
+.registry-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-batch-paste {
+  background: rgba(56, 189, 248, 0.18);
+  border: 1px solid #38bdf8;
+  color: #38bdf8;
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-batch-paste:hover {
+  background: #38bdf8;
+  color: #000;
+  transform: scale(1.04);
+}
+
 .btn-auto-fill {
   background: rgba(250, 204, 21, 0.18);
   border: 1px solid var(--accent-gold);
@@ -1568,6 +1593,85 @@ body {
 .step-2 { height: 55px; background: linear-gradient(180deg, #e2e8f0 0%, #94a3b8 100%); }
 .step-3 { height: 40px; background: linear-gradient(180deg, #fdba74 0%, #c2410c 100%); }
 
+/* 8위 꼴찌 내기 벌칙 당첨자 박제 박스 */
+.penalty-box {
+  margin: 12px 0;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(88, 28, 135, 0.5) 0%, rgba(153, 27, 27, 0.5) 100%);
+  border: 1.5px solid #f87171;
+  padding: 10px 14px;
+  box-shadow: 0 4px 16px rgba(239, 68, 68, 0.25);
+}
+
+.penalty-badge {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #fca5a5;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.penalty-card-inner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 8px;
+  padding: 8px 12px;
+  border: 1px dashed rgba(248, 113, 113, 0.5);
+}
+
+.penalty-card-inner.penalty-my-bet {
+  border-color: #facc15;
+  background: rgba(220, 38, 38, 0.35);
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.5);
+}
+
+.penalty-left-icon {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.penalty-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.penalty-target-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 2px;
+}
+
+.penalty-bettor-name {
+  font-size: 1.05rem;
+  font-weight: 900;
+  color: #facc15;
+  letter-spacing: -0.3px;
+}
+
+.penalty-swimmer-name {
+  font-size: 0.85rem;
+  color: #e2e8f0;
+  font-weight: 600;
+}
+
+.penalty-reason {
+  font-size: 0.82rem;
+  color: #fecaca;
+  margin-bottom: 2px;
+}
+
+.penalty-quote {
+  font-size: 0.8rem;
+  color: #cbd5e1;
+  font-style: italic;
+}
+
 /* 정산표 */
 .result-payout {
   background: rgba(0, 0, 0, 0.35);
@@ -1862,10 +1966,21 @@ body {
   .registry-desc {
     display: none !important;
   }
-  .btn-auto-fill {
-    font-size: 12px !important;
+  .registry-actions {
+    display: flex !important;
+    gap: 4px !important;
+    align-items: center !important;
+  }
+  .btn-batch-paste {
+    font-size: 11px !important;
     font-weight: 700 !important;
-    padding: 3px 8px !important;
+    padding: 3px 7px !important;
+    border-radius: 6px !important;
+  }
+  .btn-auto-fill {
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    padding: 3px 7px !important;
     border-radius: 6px !important;
   }
   .registry-inputs-grid {
@@ -2446,6 +2561,34 @@ body {
   .step-1 { height: 40px !important; }
   .step-2 { height: 28px !important; }
   .step-3 { height: 18px !important; }
+  .penalty-box {
+    margin: 5px 0 !important;
+    padding: 5px 8px !important;
+    border-radius: 8px !important;
+  }
+  .penalty-badge {
+    font-size: 9.5px !important;
+    margin-bottom: 3px !important;
+  }
+  .penalty-card-inner {
+    padding: 4px 8px !important;
+    gap: 8px !important;
+  }
+  .penalty-left-icon {
+    font-size: 1.3rem !important;
+  }
+  .penalty-bettor-name {
+    font-size: 11px !important;
+  }
+  .penalty-swimmer-name {
+    font-size: 9.5px !important;
+  }
+  .penalty-reason {
+    font-size: 9px !important;
+  }
+  .penalty-quote {
+    font-size: 8.5px !important;
+  }
   .result-payout {
     padding: 5px 10px !important;
     margin: 0 !important;
@@ -2595,10 +2738,21 @@ body.mobile-landscape-mode .registry-title {
 body.mobile-landscape-mode .registry-desc {
   display: none !important;
 }
-body.mobile-landscape-mode .btn-auto-fill {
-  font-size: 12px !important;
+body.mobile-landscape-mode .registry-actions {
+  display: flex !important;
+  gap: 4px !important;
+  align-items: center !important;
+}
+body.mobile-landscape-mode .btn-batch-paste {
+  font-size: 11px !important;
   font-weight: 700 !important;
-  padding: 3px 8px !important;
+  padding: 3px 7px !important;
+  border-radius: 6px !important;
+}
+body.mobile-landscape-mode .btn-auto-fill {
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  padding: 3px 7px !important;
   border-radius: 6px !important;
 }
 body.mobile-landscape-mode .registry-inputs-grid {
@@ -3172,6 +3326,34 @@ body.mobile-landscape-mode .podium-step {
 body.mobile-landscape-mode .step-1 { height: 40px !important; }
 body.mobile-landscape-mode .step-2 { height: 28px !important; }
 body.mobile-landscape-mode .step-3 { height: 18px !important; }
+body.mobile-landscape-mode .penalty-box {
+  margin: 5px 0 !important;
+  padding: 5px 8px !important;
+  border-radius: 8px !important;
+}
+body.mobile-landscape-mode .penalty-badge {
+  font-size: 9.5px !important;
+  margin-bottom: 3px !important;
+}
+body.mobile-landscape-mode .penalty-card-inner {
+  padding: 4px 8px !important;
+  gap: 8px !important;
+}
+body.mobile-landscape-mode .penalty-left-icon {
+  font-size: 1.3rem !important;
+}
+body.mobile-landscape-mode .penalty-bettor-name {
+  font-size: 11px !important;
+}
+body.mobile-landscape-mode .penalty-swimmer-name {
+  font-size: 9.5px !important;
+}
+body.mobile-landscape-mode .penalty-reason {
+  font-size: 9px !important;
+}
+body.mobile-landscape-mode .penalty-quote {
+  font-size: 8.5px !important;
+}
 body.mobile-landscape-mode .result-payout {
   padding: 5px 10px !important;
   margin: 0 !important;

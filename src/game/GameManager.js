@@ -34,9 +34,37 @@ export class GameManager {
     // 출발 시퀀스 상태
     this.startSequenceTimer = 0;
     this.startStep = 0;
+
+    this.sprintClimaxTriggered = false;
+    this.wakeLock = null;
+  }
+
+  loadSavedBettors() {
+    try {
+      const saved = localStorage.getItem('comic_swim_bettors');
+      if (saved) {
+        const map = JSON.parse(saved);
+        SWIMMERS_DATA.forEach(s => {
+          if (map[s.lane] !== undefined && map[s.lane].trim() !== '') {
+            s.bettorName = map[s.lane];
+          }
+        });
+      }
+    } catch (e) {}
+  }
+
+  saveBettorNames() {
+    try {
+      const map = {};
+      SWIMMERS_DATA.forEach(s => {
+        map[s.lane] = s.bettorName || '';
+      });
+      localStorage.setItem('comic_swim_bettors', JSON.stringify(map));
+    } catch (e) {}
   }
 
   init() {
+    this.loadSavedBettors();
     this.resetForNewRace();
   }
 
@@ -47,6 +75,7 @@ export class GameManager {
     this.introLaneIndex = 0;
     this.introTimer = 0;
     this.lastIncidentTime = -999;
+    this.sprintClimaxTriggered = false;
 
     // 레이스 계획 생성 (1등 선정 및 겹치지 않는 돌발 상황 Z 배정)
     this.racePlan = generateRacePlan(SWIMMERS_DATA);
@@ -78,6 +107,7 @@ export class GameManager {
     const swimmer = SWIMMERS_DATA.find(s => s.lane === lane);
     if (swimmer) {
       swimmer.bettorName = name.trim();
+      this.saveBettorNames();
     }
   }
 
@@ -193,6 +223,18 @@ export class GameManager {
     this.uiManager.showAnnouncement("GO! GO! GO!");
     soundManager.playStartBeep();
 
+    // 모바일 햅틱 진동 (출발 버저 비프)
+    if ('vibrate' in navigator) {
+      try { navigator.vibrate([120]); } catch (e) {}
+    }
+
+    // 모바일 화면 꺼짐 방지 (Screen Wake Lock)
+    if ('wakeLock' in navigator) {
+      navigator.wakeLock.request('screen').then(lock => {
+        this.wakeLock = lock;
+      }).catch(() => {});
+    }
+
     // 8명 일제히 다이빙!
     this.sceneManager.swimmers.forEach(s => s.startDive());
     setTimeout(() => {
@@ -260,6 +302,9 @@ export class GameManager {
           swimmer.triggerIncident(plan.incident);
 
           soundManager.playIncidentSfx(plan.incident.id);
+          if ('vibrate' in navigator) {
+            try { navigator.vibrate([60, 40, 60]); } catch (e) {}
+          }
 
           const commentTemplate = plan.incident.commentary[Math.floor(Math.random() * plan.incident.commentary.length)];
           const comment = commentTemplate.replace('{name}', swimmer.data.name);
@@ -290,6 +335,10 @@ export class GameManager {
           this.sceneManager.pool.triggerTouchPad(swimmer.lane, isFirst);
           soundManager.playTouchPad();
 
+          if (isFirst && 'vibrate' in navigator) {
+            try { navigator.vibrate([180, 80, 240]); } catch (e) {}
+          }
+
           const bettorTag = swimmer.data.bettorName ? `(${swimmer.data.bettorName})` : '';
 
           if (isFirst) {
@@ -314,6 +363,15 @@ export class GameManager {
       const currentRanks = [...this.sceneManager.swimmers].sort((a, b) => b.progressZ - a.progressZ);
       const leader = currentRanks[0];
 
+      // 결승 10m 구간(40m 돌파) 관중 함성 고조 및 심장 박동 긴장감 비트
+      if (!this.sprintClimaxTriggered && leader && leader.progressZ >= 40.0) {
+        this.sprintClimaxTriggered = true;
+        soundManager.playSprintClimax();
+        if ('vibrate' in navigator) {
+          try { navigator.vibrate([80, 50, 80]); } catch (e) {}
+        }
+      }
+
       this.uiManager.updateRaceHUD({
         timeStr,
         ranks: currentRanks,
@@ -333,6 +391,11 @@ export class GameManager {
   // 레이스 종료 및 최종 1~8위 확정
   finishRace() {
     this.state = 'FINISHED';
+
+    if (this.wakeLock) {
+      try { this.wakeLock.release(); } catch (e) {}
+      this.wakeLock = null;
+    }
 
     // 아직 못 들어온 마지막 선수(8등) 자동 확정
     const unFinished = this.sceneManager.swimmers
@@ -354,6 +417,8 @@ export class GameManager {
     if (userRank <= 3) {
       soundManager.playFanfare();
       confetti({ particleCount: 160, spread: 85, origin: { y: 0.6 } });
+    } else {
+      soundManager.playSadTrombone();
     }
 
     const rankedSwimmers = this.finishOrder.map(lane => this.sceneManager.getSwimmerByLane(lane));

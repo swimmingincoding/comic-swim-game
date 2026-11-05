@@ -365,6 +365,50 @@ class SoundManager {
     });
   }
 
+  // 꼴찌 벌칙 패배음 (Sad Trombone: 코믹 와-와-와-와아아앙~~)
+  playSadTrombone() {
+    if (this.isMuted) return;
+    this.init();
+    const now = this.ctx.currentTime;
+    const notes = [
+      { f: 293.66, d: 0.32, t: 0.0 },  // D4
+      { f: 277.18, d: 0.32, t: 0.35 }, // C#4
+      { f: 261.63, d: 0.32, t: 0.70 }  // C4
+    ];
+
+    notes.forEach(n => {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = "sawtooth";
+      osc.frequency.setValueAtTime(n.f, now + n.t);
+
+      gain.gain.setValueAtTime(0, now + n.t);
+      gain.gain.linearRampToValueAtTime(0.22, now + n.t + 0.03);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + n.t + n.d);
+
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start(now + n.t);
+      osc.stop(now + n.t + n.d);
+    });
+
+    // 마지막 음: 아래로 처지는 "와아아아앙~~" (B3 -> F3 슬라이드)
+    const lastOsc = this.ctx.createOscillator();
+    const lastGain = this.ctx.createGain();
+    lastOsc.type = "sawtooth";
+    lastOsc.frequency.setValueAtTime(246.94, now + 1.05);
+    lastOsc.frequency.exponentialRampToValueAtTime(140.0, now + 1.95);
+
+    lastGain.gain.setValueAtTime(0, now + 1.05);
+    lastGain.gain.linearRampToValueAtTime(0.25, now + 1.08);
+    lastGain.gain.exponentialRampToValueAtTime(0.001, now + 2.0);
+
+    lastOsc.connect(lastGain);
+    lastGain.connect(this.ctx.destination);
+    lastOsc.start(now + 1.05);
+    lastOsc.stop(now + 2.0);
+  }
+
   // 버튼 클릭 UI음
   playClick() {
     if (this.isMuted) return;
@@ -417,6 +461,59 @@ class SoundManager {
 
       noise.start(now);
     } catch (e) {}
+  }
+
+  // 결승 10m 구간 관중 함성 고조 및 심장 박동 비트
+  playSprintClimax() {
+    if (this.isMuted) return;
+    this.init();
+    const now = this.ctx.currentTime;
+
+    // 1. 관중 함성 크레센도 (서서히 커지는 박수와 환호)
+    try {
+      const bufferSize = Math.floor(this.ctx.sampleRate * 4.0);
+      const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = (Math.random() * 2 - 1) * Math.min(1.0, i / (this.ctx.sampleRate * 1.5));
+      }
+      const noise = this.ctx.createBufferSource();
+      noise.buffer = buffer;
+
+      const filter = this.ctx.createBiquadFilter();
+      filter.type = "bandpass";
+      filter.frequency.setValueAtTime(1100, now);
+      filter.Q.setValueAtTime(1.4, now);
+
+      const gain = this.ctx.createGain();
+      gain.gain.setValueAtTime(0.02, now);
+      gain.gain.linearRampToValueAtTime(0.35, now + 2.5);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 4.0);
+
+      noise.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.ctx.destination);
+      noise.start(now);
+    } catch (e) {}
+
+    // 2. 긴장감 넘치는 심장박동 (두근... 두근... 두근...) 4회 펄스
+    for (let i = 0; i < 4; i++) {
+      const t = now + i * 0.7;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(80, t);
+      osc.frequency.exponentialRampToValueAtTime(45, t + 0.18);
+
+      gain.gain.setValueAtTime(0, t);
+      gain.gain.linearRampToValueAtTime(0.3, t + 0.03);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
+
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start(t);
+      osc.stop(t + 0.22);
+    }
   }
 }
 
