@@ -46,6 +46,7 @@ export class GameManager {
     this.finishOrder = [];
     this.introLaneIndex = 0;
     this.introTimer = 0;
+    this.lastIncidentTime = -999;
 
     // 레이스 계획 생성 (1등 선정 및 겹치지 않는 돌발 상황 Z 배정)
     this.racePlan = generateRacePlan(SWIMMERS_DATA);
@@ -249,29 +250,31 @@ export class GameManager {
       this.sceneManager.swimmers.forEach(swimmer => {
         const plan = this.racePlan.swimmerPlans.find(p => p.lane === swimmer.lane);
 
-        // 돌발 상황 트리거 체크 (겹치지 않는 Z 지점에서 순차 발생)
-        if (!plan.isWinner && !plan.incidentTriggered && swimmer.state === 'SWIMMING') {
-          if (swimmer.progressZ >= plan.incidentTriggerZ) {
-            plan.incidentTriggered = true;
-            swimmer.triggerIncident(plan.incident);
+        // 돌발 상황 트리거 체크: 목표 시간 도달 & 이전 돌발과 최소 3.2초 안전 간격 보장
+        const timeSinceLast = this.raceTime - this.lastIncidentTime;
+        const reachedTrigger = (this.raceTime >= plan.scheduledTime);
 
-            soundManager.playIncidentSfx(plan.incident.id);
+        if (!plan.isWinner && !plan.incidentTriggered && swimmer.state === 'SWIMMING' && reachedTrigger && timeSinceLast >= 3.2) {
+          plan.incidentTriggered = true;
+          this.lastIncidentTime = this.raceTime;
+          swimmer.triggerIncident(plan.incident);
 
-            const commentTemplate = plan.incident.commentary[Math.floor(Math.random() * plan.incident.commentary.length)];
-            const comment = commentTemplate.replace('{name}', swimmer.data.name);
+          soundManager.playIncidentSfx(plan.incident.id);
 
-            // 전광판 및 스택 피드 알림
-            const bettorTag = swimmer.data.bettorName ? `[${swimmer.data.bettorName}]` : '';
-            this.sceneManager.pool.updateScoreboard({
-              statusText: "🚨 INCIDENT REPORT",
-              time: timeStr,
-              leaderName: `${plan.incident.emoji} ${swimmer.data.name} ${bettorTag}`,
-              newsText: comment
-            });
+          const commentTemplate = plan.incident.commentary[Math.floor(Math.random() * plan.incident.commentary.length)];
+          const comment = commentTemplate.replace('{name}', swimmer.data.name);
 
-            // 돌발 상황 큐/스택 알림 (동시 발생해도 누적 유지)
-            this.uiManager.pushIncidentAlert(swimmer.data.name, swimmer.lane, plan.incident, comment, swimmer.data.bettorName);
-          }
+          // 전광판 및 스택 피드 알림
+          const bettorTag = swimmer.data.bettorName ? `[${swimmer.data.bettorName}]` : '';
+          this.sceneManager.pool.updateScoreboard({
+            statusText: "🚨 INCIDENT REPORT",
+            time: timeStr,
+            leaderName: `${plan.incident.emoji} ${swimmer.data.name} ${bettorTag}`,
+            newsText: comment
+          });
+
+          // 돌발 상황 알림 (3.8초 표시 후 퇴장, 오버레이 방지)
+          this.uiManager.pushIncidentAlert(swimmer.data.name, swimmer.lane, plan.incident, comment, swimmer.data.bettorName);
         }
 
         // 3D 수영선수 애니메이션 업데이트 (리커버리 후 완영 포함)
@@ -321,7 +324,7 @@ export class GameManager {
       // 종료 조건:
       // "어떻게 되든간에 7등까지 무조건 완영은 해야 8등이 못 들어오더라도 최종 순위는 다 알 수 있을 것 같아."
       // -> 최소 7명이 실제로 50m 터치패드를 통과했을 때 8등 자동 확정 및 경기 종료!
-      if (this.finishOrder.length >= 7 || this.raceTime > 42) {
+      if (this.finishOrder.length >= 7 || this.raceTime > 65) {
         this.finishRace();
       }
     }

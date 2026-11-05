@@ -498,7 +498,7 @@ export class UIManager {
   pushIncidentAlert(name, lane, incident, comment, bettorName = "") {
     if (!this.incidentStack) return;
 
-    const bettorHtml = bettorName ? `<span class="feed-bettor">🏷️ 배터: ${bettorName}</span>` : '';
+    const bettorHtml = bettorName ? `<span class="feed-bettor">🏷️ ${bettorName}</span>` : '';
 
     const alertCard = document.createElement('div');
     alertCard.className = 'incident-feed-card slide-in-feed';
@@ -508,7 +508,7 @@ export class UIManager {
       </div>
       <div class="feed-content">
         <div class="feed-header">
-          <span class="feed-lane-tag lane-color-${lane}">LANE ${lane}</span>
+          <span class="feed-lane-tag lane-color-${lane}">L${lane}</span>
           <strong class="feed-name">${name}</strong>
           ${bettorHtml}
           <span class="feed-incident-name">${incident.name}</span>
@@ -519,11 +519,11 @@ export class UIManager {
 
     this.incidentStack.appendChild(alertCard);
 
-    // 7초 동안 유지 후 부드럽게 퇴장
+    // 3.8초 동안 유지 후 부드럽게 퇴장 (다음 돌발 상황과 겹침 원천 차단)
     setTimeout(() => {
       alertCard.classList.add('fade-out');
-      setTimeout(() => alertCard.remove(), 400);
-    }, 6500);
+      setTimeout(() => alertCard.remove(), 350);
+    }, 3800);
   }
 
   // 실시간 레이스 HUD (타이머, 순위표, 미니맵) 갱신

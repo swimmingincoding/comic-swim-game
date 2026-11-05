@@ -185,8 +185,8 @@
       </div>
     </div>
 
-    <!-- 좌측 상단 실시간 중계 정보 & 타이머 (좌측 상단에 완전 고정) -->
-    <div class="hud-top-left" style="position: fixed !important; top: 85px !important; left: 24px !important; right: auto !important; width: 175px !important; z-index: 99999 !important; pointer-events: none !important;">
+    <!-- 좌측 상단 실시간 중계 정보 & 타이머 -->
+    <div class="hud-top-left">
       <div class="live-broadcast-tag">🔴 LIVE BROADCAST</div>
       <div class="timer-card">
         <span class="timer-label">RACE TIME</span>
@@ -205,8 +205,8 @@
       </div>
     </div>
 
-    <!-- 돌발 상황 누적 피드 스택 (우측 상단에 완전 고정 - 좌측 타이머와 1,300px 이상 영구 분리!) -->
-    <div id="incident-stack" class="incident-stack" style="position: fixed !important; top: 85px !important; right: 24px !important; left: auto !important; width: 380px !important; max-width: 38vw !important; z-index: 100000 !important; display: flex !important; flex-direction: column !important; gap: 10px !important; pointer-events: auto !important;">
+    <!-- 돌발 상황 누적 피드 스택 (우측 상단 최적화 피드) -->
+    <div id="incident-stack" class="incident-stack">
       <!-- 동적 추가 -->
     </div>
 
@@ -242,6 +242,6 @@
     </div>
   </div>
 
-  <script type="module" src="./src/main.js?v=4"></script>
+  <script type="module" src="./src/main.js?v=10"></script>
 </body>
 </html>

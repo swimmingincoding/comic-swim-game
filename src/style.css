@@ -789,8 +789,8 @@ body {
   top: 16px;
   left: 50%;
   transform: translateX(-50%);
-  width: 720px;
-  max-width: 90vw;
+  width: min(520px, 46vw);
+  max-width: 46vw;
   background: rgba(15, 23, 42, 0.85);
   border: 1px solid var(--border-glass);
   border-radius: 14px;
@@ -1302,18 +1302,18 @@ body {
    - [중요] 좌측 상단 타이머와 절대 겹치지 않도록 화면 우측 상단에 완전 고정!
    ========================================================================== */
 .incident-stack {
-  position: absolute !important;
-  top: 16px !important;
-  right: 24px !important;
-  left: auto !important;
-  bottom: auto !important;
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 10px !important;
-  pointer-events: auto !important;
-  width: 380px !important;
-  max-width: 36vw !important;
-  z-index: 30 !important;
+  position: absolute;
+  top: 80px;
+  right: 20px;
+  left: auto;
+  bottom: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+  width: min(290px, 26vw);
+  max-width: calc(50vw - 275px);
+  z-index: 30;
 }
 
 .incident-feed-card {
@@ -2133,8 +2133,8 @@ body {
     top: 4px !important;
     left: 50% !important;
     transform: translateX(-50%) !important;
-    width: min(280px, 36vw) !important;
-    max-width: 36vw !important;
+    width: min(210px, 28vw) !important;
+    max-width: 28vw !important;
     padding: 2px 6px 3px 6px !important;
     background: rgba(15, 23, 42, 0.65) !important;
     backdrop-filter: blur(8px) !important;
@@ -2199,58 +2199,81 @@ body {
   .incident-stack {
     top: 4px !important;
     right: max(8px, env(safe-area-inset-right)) !important;
-    width: min(200px, 28vw) !important;
-    max-width: 28vw !important;
+    left: auto !important;
+    width: min(190px, 24vw) !important;
+    max-width: calc(50vw - 115px) !important;
     gap: 3px !important;
     z-index: 25 !important;
     pointer-events: none !important;
   }
   .incident-feed-card {
     padding: 3px 6px !important;
-    font-size: 11px !important;
-    gap: 6px !important;
+    font-size: 10.5px !important;
+    gap: 5px !important;
     border-radius: 6px !important;
     border: 1px solid #f87171 !important;
     background: linear-gradient(135deg, rgba(153, 27, 27, 0.94) 0%, rgba(127, 29, 29, 0.94) 100%) !important;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5) !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
   }
   .feed-left {
-    font-size: 16px !important;
+    font-size: 15px !important;
+    flex-shrink: 0 !important;
+  }
+  .feed-content {
+    min-width: 0 !important;
+    flex: 1 !important;
+    overflow: hidden !important;
   }
   .feed-header {
     gap: 3px !important;
-    flex-wrap: wrap !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
     margin-bottom: 1px !important;
     line-height: 1.2 !important;
+    display: flex !important;
+    align-items: center !important;
   }
   .feed-lane-tag {
-    font-size: 9px !important;
+    font-size: 8.5px !important;
     padding: 1px 3px !important;
     border-radius: 3px !important;
     font-weight: 800 !important;
+    flex-shrink: 0 !important;
   }
   .feed-name {
-    font-size: 11px !important;
+    font-size: 10.5px !important;
     font-weight: 800 !important;
+    flex-shrink: 0 !important;
   }
   .feed-bettor {
-    font-size: 9px !important;
+    font-size: 8.5px !important;
     color: #facc15 !important;
     font-weight: 700 !important;
+    padding: 0 3px !important;
+    border-radius: 3px !important;
+    background: rgba(0, 0, 0, 0.3) !important;
+    flex-shrink: 0 !important;
   }
   .feed-incident-name {
-    font-size: 10px !important;
+    font-size: 9.5px !important;
     color: #fca5a5 !important;
     font-weight: 700 !important;
+    margin-left: auto !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
   }
   .feed-comment {
-    font-size: 10px !important;
+    font-size: 9.5px !important;
     color: #f1f5f9 !important;
     line-height: 1.2 !important;
     white-space: nowrap !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
-    max-width: 140px !important;
+    max-width: 130px !important;
     margin: 0 !important;
   }
 
@@ -2747,8 +2770,8 @@ body.mobile-landscape-mode .minimap-container {
   top: 4px !important;
   left: 50% !important;
   transform: translateX(-50%) !important;
-  width: min(280px, 36vw) !important;
-  max-width: 36vw !important;
+  width: min(210px, 28vw) !important;
+  max-width: 28vw !important;
   padding: 2px 6px 3px 6px !important;
   background: rgba(15, 23, 42, 0.65) !important;
   backdrop-filter: blur(8px) !important;
@@ -2813,58 +2836,81 @@ body.mobile-landscape-mode .m-dot.my-bet-dot {
 body.mobile-landscape-mode .incident-stack {
   top: 4px !important;
   right: max(8px, env(safe-area-inset-right)) !important;
-  width: min(200px, 28vw) !important;
-  max-width: 28vw !important;
+  left: auto !important;
+  width: min(190px, 24vw) !important;
+  max-width: calc(50vw - 115px) !important;
   gap: 3px !important;
   z-index: 25 !important;
   pointer-events: none !important;
 }
 body.mobile-landscape-mode .incident-feed-card {
   padding: 3px 6px !important;
-  font-size: 11px !important;
-  gap: 6px !important;
+  font-size: 10.5px !important;
+  gap: 5px !important;
   border-radius: 6px !important;
   border: 1px solid #f87171 !important;
   background: linear-gradient(135deg, rgba(153, 27, 27, 0.94) 0%, rgba(127, 29, 29, 0.94) 100%) !important;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5) !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
 }
 body.mobile-landscape-mode .feed-left {
-  font-size: 16px !important;
+  font-size: 15px !important;
+  flex-shrink: 0 !important;
+}
+body.mobile-landscape-mode .feed-content {
+  min-width: 0 !important;
+  flex: 1 !important;
+  overflow: hidden !important;
 }
 body.mobile-landscape-mode .feed-header {
   gap: 3px !important;
-  flex-wrap: wrap !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
   margin-bottom: 1px !important;
   line-height: 1.2 !important;
+  display: flex !important;
+  align-items: center !important;
 }
 body.mobile-landscape-mode .feed-lane-tag {
-  font-size: 9px !important;
+  font-size: 8.5px !important;
   padding: 1px 3px !important;
   border-radius: 3px !important;
   font-weight: 800 !important;
+  flex-shrink: 0 !important;
 }
 body.mobile-landscape-mode .feed-name {
-  font-size: 11px !important;
+  font-size: 10.5px !important;
   font-weight: 800 !important;
+  flex-shrink: 0 !important;
 }
 body.mobile-landscape-mode .feed-bettor {
-  font-size: 9px !important;
+  font-size: 8.5px !important;
   color: #facc15 !important;
   font-weight: 700 !important;
+  padding: 0 3px !important;
+  border-radius: 3px !important;
+  background: rgba(0, 0, 0, 0.3) !important;
+  flex-shrink: 0 !important;
 }
 body.mobile-landscape-mode .feed-incident-name {
-  font-size: 10px !important;
+  font-size: 9.5px !important;
   color: #fca5a5 !important;
   font-weight: 700 !important;
+  margin-left: auto !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
 }
 body.mobile-landscape-mode .feed-comment {
-  font-size: 10px !important;
+  font-size: 9.5px !important;
   color: #f1f5f9 !important;
   line-height: 1.2 !important;
   white-space: nowrap !important;
   overflow: hidden !important;
   text-overflow: ellipsis !important;
-  max-width: 140px !important;
+  max-width: 130px !important;
   margin: 0 !important;
 }
 

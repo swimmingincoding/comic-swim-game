@@ -115,10 +115,13 @@ export function generateRacePlan(swimmers) {
     if (i !== winnerIndex) loserIndices.push(i);
   }
 
-  // 3. 7명에게 겹치지 않게 순차적 발생 지점 Z 배정 (15m, 19m, 23.5m, 28m, 32.5m, 37m, 41.5m 등)
-  const baseTriggerZList = [15.0, 19.5, 24.0, 28.5, 33.0, 37.5, 42.0];
-  // 지점 목록을 섞어서 어느 레인이 먼저 터질지는 랜덤!
-  const shuffledZList = [...baseTriggerZList].sort(() => Math.random() - 0.5);
+  // 3. 40초 레이스 기준: 7명의 돌발 상황을 10.5초부터 36.5초까지 3.5~4.5초 간격으로 순차 분산!
+  // 참가자들이 어느 영자에게 무슨 일이 일어났는지 충분히 보고 웃을 수 있는 황금 간격 배정
+  const baseScheduledTimes = [10.5, 14.5, 19.0, 23.5, 28.0, 32.5, 36.5];
+  // 약간의 자연스러운 랜덤 지터(±0.5초) 부여
+  const jitteredTimes = baseScheduledTimes.map(t => Number((t + (Math.random() * 1.0 - 0.5)).toFixed(1)));
+  // 어느 레인이 몇 번째로 터질지는 순수 랜덤!
+  const shuffledTimes = [...jitteredTimes].sort(() => Math.random() - 0.5);
 
   const incidentKeys = Object.keys(INCIDENT_TYPES).sort(() => Math.random() - 0.5);
 
@@ -126,30 +129,33 @@ export function generateRacePlan(swimmers) {
     const isWinner = (idx === winnerIndex);
 
     if (isWinner) {
-      // 1등 선수: 돌발 상황 없음, 완벽한 자유형 페이스 (초당 약 2.15~2.25m)
+      // 1등 선수: 50m 완주 시간 약 39.5~40.5초 (초당 약 1.18~1.21m 정밀 페이스)
       return {
         lane: swimmer.lane,
         name: swimmer.name,
         bettorName: swimmer.bettorName || "",
         isWinner: true,
-        baseSpeed: 2.18 + (Math.random() * 0.12),
+        baseSpeed: 1.18 + (Math.random() * 0.03),
         incident: null,
+        scheduledTime: 999,
         incidentTriggerZ: 999,
         incidentTriggered: false,
         recovered: false,
         finishRank: 1
       };
     } else {
-      // 패자 선수: 겹치지 않는 Z 지점에서 돌발 상황 발생
+      // 패자 7명: 순차적 시간표에 맞춰 차례대로 돌발 상황 발생
       const loserRankOrder = loserIndices.indexOf(idx);
-      const triggerZ = shuffledZList[loserRankOrder];
+      const scheduledTime = shuffledTimes[loserRankOrder];
+      // 해당 시간에 대략 도달하는 Z 거리 (약 12m ~ 43m)
+      const triggerZ = Number((scheduledTime * 1.16).toFixed(1));
       const incidentKey = incidentKeys[loserRankOrder % incidentKeys.length];
       const incident = INCIDENT_TYPES[incidentKey];
 
-      // 초반에 빠른 척 위장 속도
-      const initialSpeed = 2.05 + Math.random() * 0.35;
-      // 리커버리 후 완영 속도 (1등보다는 느리지만 끝까지 들어옴)
-      const recoverSpeed = 1.6 + Math.random() * 0.4;
+      // 초반 위장 선두 경쟁 속도 (1등과 팽팽하거나 살짝 앞서는 연출)
+      const initialSpeed = 1.16 + (Math.random() * 0.09);
+      // 리커버리 후 완영 속도 (1등보다 느리지만 43~53초 내 7등까지 무조건 골인)
+      const recoverSpeed = 0.90 + (Math.random() * 0.18);
 
       return {
         lane: swimmer.lane,
@@ -159,6 +165,7 @@ export function generateRacePlan(swimmers) {
         baseSpeed: initialSpeed,
         recoverSpeed: recoverSpeed,
         incident: incident,
+        scheduledTime: scheduledTime,
         incidentTriggerZ: triggerZ,
         incidentTriggered: false,
         recovered: false,
