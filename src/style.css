@@ -31,6 +31,21 @@
   user-select: none;
 }
 
+/* 📱 모바일 가상 키보드(소프트웨어 키보드) 즉시 호출 & 텍스트 입력 보장 */
+input,
+textarea,
+select,
+[contenteditable="true"] {
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  -ms-user-select: text !important;
+  user-select: text !important;
+  -webkit-touch-callout: default !important;
+  touch-action: auto !important;
+  pointer-events: auto !important;
+  cursor: text !important;
+}
+
 body {
   width: 100vw;
   height: 100vh;
@@ -414,12 +429,16 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.2);
   color: #fff;
   font-family: var(--font-body);
-  font-size: 0.78rem;
+  font-size: 0.85rem;
   font-weight: 700;
   padding: 4px 6px;
   border-radius: 6px;
   outline: none;
   width: 100%;
+  -webkit-user-select: text !important;
+  user-select: text !important;
+  touch-action: auto !important;
+  pointer-events: auto !important;
 }
 
 .reg-lane-input:focus {
@@ -2172,7 +2191,10 @@ body {
     background: rgba(255, 255, 255, 0.12) !important;
     color: #fff !important;
     width: 100% !important;
-    touch-action: manipulation;
+    touch-action: auto !important;
+    -webkit-user-select: text !important;
+    user-select: text !important;
+    pointer-events: auto !important;
   }
 
   /* 8명 영자 카드: 가로 스와이프 릴 (Thumb Swipeable) */
@@ -2243,7 +2265,10 @@ body {
     height: 30px !important;
     width: 100% !important;
     border-radius: 6px !important;
-    touch-action: manipulation;
+    touch-action: auto !important;
+    -webkit-user-select: text !important;
+    user-select: text !important;
+    pointer-events: auto !important;
   }
   .fake-stats {
     display: none !important;
@@ -2983,7 +3008,10 @@ body.mobile-landscape-mode .reg-lane-input {
   background: rgba(255, 255, 255, 0.12) !important;
   color: #fff !important;
   width: 100% !important;
-  touch-action: manipulation;
+  touch-action: auto !important;
+  -webkit-user-select: text !important;
+  user-select: text !important;
+  pointer-events: auto !important;
 }
 
 body.mobile-landscape-mode .swimmer-grid {
@@ -3053,7 +3081,10 @@ body.mobile-landscape-mode .bettor-name-input {
   height: 30px !important;
   width: 100% !important;
   border-radius: 6px !important;
-  touch-action: manipulation;
+  touch-action: auto !important;
+  -webkit-user-select: text !important;
+  user-select: text !important;
+  pointer-events: auto !important;
 }
 body.mobile-landscape-mode .fake-stats {
   display: none !important;
@@ -3650,9 +3681,13 @@ body.mobile-landscape-mode .penalty-preset-btn {
   border-radius: 4px !important;
 }
 body.mobile-landscape-mode .custom-penalty-input {
-  padding: 2px 5px !important;
-  font-size: 9px !important;
-  width: 80px !important;
+  padding: 2px 6px !important;
+  font-size: 16px !important;
+  width: 90px !important;
+  touch-action: auto !important;
+  -webkit-user-select: text !important;
+  user-select: text !important;
+  pointer-events: auto !important;
 }
 body.mobile-landscape-mode .toast-notification {
   bottom: 10px !important;

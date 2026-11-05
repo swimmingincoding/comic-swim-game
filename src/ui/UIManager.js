@@ -112,6 +112,12 @@ export class UIManager {
     });
 
     if (customPenaltyInput) {
+      customPenaltyInput.addEventListener('pointerdown', (e) => e.stopPropagation());
+      customPenaltyInput.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: true });
+      customPenaltyInput.addEventListener('click', (e) => {
+        e.stopPropagation();
+        customPenaltyInput.focus();
+      });
       customPenaltyInput.addEventListener('input', (e) => {
         const val = e.target.value.trim();
         if (this.callbacks.onSetPenalty) {
@@ -214,6 +220,12 @@ export class UIManager {
 
     // 하단 독 내기 참가자 인풋 연동
     if (this.dockBettorInput) {
+      this.dockBettorInput.addEventListener('pointerdown', (e) => e.stopPropagation());
+      this.dockBettorInput.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: true });
+      this.dockBettorInput.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.dockBettorInput.focus();
+      });
       this.dockBettorInput.addEventListener('input', (e) => {
         const val = e.target.value;
         this.callbacks.onSetBettorName(this.currentSelectedLane, val);
@@ -406,6 +418,12 @@ export class UIManager {
       });
 
       const input = item.querySelector('.reg-lane-input');
+      input.addEventListener('pointerdown', (e) => e.stopPropagation());
+      input.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: true });
+      input.addEventListener('click', (e) => {
+        e.stopPropagation();
+        input.focus();
+      });
       input.addEventListener('input', (e) => {
         const val = e.target.value;
         this.callbacks.onSetBettorName(s.lane, val);
@@ -494,6 +512,12 @@ export class UIManager {
 
       // 내기 건 사람 이름 입력 이벤트
       const bettorInput = card.querySelector('.bettor-name-input');
+      bettorInput.addEventListener('pointerdown', (e) => e.stopPropagation());
+      bettorInput.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: true });
+      bettorInput.addEventListener('click', (e) => {
+        e.stopPropagation();
+        bettorInput.focus();
+      });
       bettorInput.addEventListener('input', (e) => {
         const val = e.target.value;
         this.callbacks.onSetBettorName(s.lane, val);
