@@ -917,12 +917,15 @@ body {
   bottom: 24px;
   left: 24px;
   width: 280px;
+  max-height: calc(100vh - 80px);
   background: rgba(15, 23, 42, 0.85);
   border: 1px solid var(--border-glass);
   border-radius: 16px;
   padding: 12px;
   backdrop-filter: blur(14px);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
 }
 
 .lb-header {
@@ -950,6 +953,8 @@ body {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  overflow-y: auto;
+  scrollbar-width: thin;
 }
 
 .leaderboard-item {
@@ -1448,20 +1453,28 @@ body {
    3. 경기 결과 및 시상 모달 (Result Modal)
    ========================================================================= */
 .modal-overlay {
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(6, 11, 20, 0.75);
-  backdrop-filter: blur(12px);
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(6, 11, 20, 0.85);
+  backdrop-filter: blur(14px);
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  z-index: 20;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  padding: 24px 16px;
+  box-sizing: border-box;
+  z-index: 100000;
 }
 
 .modal-card {
+  margin: auto;
   width: 90%;
   max-width: 640px;
   background: rgba(15, 23, 42, 0.96);
@@ -1473,6 +1486,7 @@ body {
   flex-direction: column;
   gap: 16px;
   animation: pop-modal 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  box-sizing: border-box;
 }
 
 @keyframes pop-modal {
@@ -2277,66 +2291,97 @@ body {
     margin: 0 !important;
   }
 
-  /* 좌측 하단 실시간 리더보드 순위표 */
+  /* 좌측 하단 실시간 리더보드 순위표: 8명 전원(1~8위) 한눈에 표시 */
   .leaderboard-panel {
     bottom: 4px !important;
-    left: max(8px, env(safe-area-inset-left)) !important;
-    width: min(155px, 22vw) !important;
-    max-height: min(140px, 48vh) !important;
-    padding: 3px 5px !important;
+    left: max(6px, env(safe-area-inset-left)) !important;
+    width: min(175px, 24vw) !important;
+    max-height: calc(100vh - 46px) !important;
+    padding: 2px 4px !important;
     border-radius: 6px !important;
-    background: rgba(15, 23, 42, 0.75) !important;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    background: rgba(15, 23, 42, 0.85) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    backdrop-filter: blur(8px) !important;
     overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+    z-index: 25 !important;
   }
   .lb-header {
     margin-bottom: 2px !important;
-    padding-bottom: 1px !important;
+    padding: 0 2px 1px 2px !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
   }
   .lb-title {
-    font-size: 10px !important;
+    font-size: 9.5px !important;
     font-weight: 800 !important;
+    line-height: 1.1 !important;
+    color: #fff !important;
   }
   .lb-sub {
     display: none !important;
   }
-  .lb-rows {
+  .lb-list {
+    display: flex !important;
+    flex-direction: column !important;
     gap: 1.5px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    max-height: calc(100vh - 65px) !important;
+    overflow-y: auto !important;
+    scrollbar-width: thin !important;
   }
   .leaderboard-item {
-    padding: 1px 3px !important;
-    font-size: 9.5px !important;
+    padding: 0 3px !important;
+    font-size: 8.5px !important;
     gap: 2px !important;
-    border-radius: 3px !important;
-    height: 13.5px !important;
-    margin-bottom: 1px !important;
+    border-radius: 2px !important;
+    height: 12.5px !important;
+    line-height: 12.5px !important;
+    margin: 0 !important;
+    display: flex !important;
+    align-items: center !important;
   }
   .lb-rank {
-    width: 13px !important;
-    font-size: 9.5px !important;
+    width: 14px !important;
+    font-size: 8.5px !important;
     font-weight: 800 !important;
+    flex-shrink: 0 !important;
   }
   .lb-lane {
-    font-size: 8.5px !important;
+    font-size: 7.5px !important;
     padding: 0 2px !important;
+    border-radius: 2px !important;
+    font-weight: 800 !important;
+    flex-shrink: 0 !important;
   }
   .lb-name {
-    font-size: 9.5px !important;
-    max-width: 50px !important;
+    font-size: 8.5px !important;
+    font-weight: 700 !important;
+    max-width: 62px !important;
     white-space: nowrap !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
+    flex-shrink: 1 !important;
   }
   .lb-bettor {
-    display: none !important;
+    font-size: 7.5px !important;
+    color: #facc15 !important;
+    font-weight: 700 !important;
+    margin-left: 1px !important;
   }
   .lb-status {
-    font-size: 8.5px !important;
+    font-size: 8px !important;
+    line-height: 1 !important;
+    flex-shrink: 0 !important;
   }
   .lb-dist {
-    font-size: 9.5px !important;
-    font-weight: 700 !important;
+    font-size: 8.5px !important;
+    font-weight: 800 !important;
+    font-family: monospace !important;
     margin-left: auto !important;
+    flex-shrink: 0 !important;
+    color: #38bdf8 !important;
   }
 
   .announcement-box {
@@ -2345,42 +2390,101 @@ body {
     top: 45% !important;
   }
 
-  /* 5. 결과 모달 모바일 가로 최적화 */
+  /* 5. 결과 모달 모바일 가로 최적화 & 완벽한 하단 스크롤 보장 */
+  .modal-overlay {
+    padding: max(8px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left)) !important;
+  }
   .modal-card {
-    max-height: 92vh !important;
-    overflow-y: auto !important;
-    padding: 12px 16px !important;
-    max-width: 440px !important;
-    border-radius: 14px !important;
+    margin: auto !important;
+    width: min(520px, 94vw) !important;
+    max-width: 520px !important;
+    max-height: none !important;
+    overflow: visible !important;
+    padding: 10px 14px !important;
+    gap: 6px !important;
+    border-radius: 12px !important;
   }
   .result-title {
-    font-size: 18px !important;
-    font-weight: 900 !important;
+    font-size: 16px !important;
+    line-height: 1.2 !important;
+    margin: 0 !important;
   }
   .result-msg {
-    font-size: 13px !important;
+    font-size: 11px !important;
+    line-height: 1.2 !important;
+    margin: 0 !important;
   }
-  .podium-step {
-    height: 55px !important;
-    padding: 4px 2px !important;
-    font-size: 13px !important;
+  .result-podium {
+    height: 65px !important;
+    margin: 3px 0 !important;
+    gap: 6px !important;
+  }
+  .podium-col {
+    width: 78px !important;
+  }
+  .podium-crown {
+    font-size: 1.1rem !important;
+    margin-bottom: 1px !important;
   }
   .podium-swimmer {
-    font-size: 13px !important;
+    font-size: 10px !important;
     font-weight: 700 !important;
+    margin-bottom: 2px !important;
+  }
+  .podium-bettor {
+    font-size: 8.5px !important;
+    padding: 1px 4px !important;
+    margin-bottom: 2px !important;
+  }
+  .podium-step {
+    padding: 2px !important;
+    font-size: 10px !important;
+  }
+  .step-1 { height: 40px !important; }
+  .step-2 { height: 28px !important; }
+  .step-3 { height: 18px !important; }
+  .result-payout {
+    padding: 5px 10px !important;
+    margin: 0 !important;
+    border-radius: 8px !important;
   }
   .payout-row {
-    font-size: 13px !important;
+    font-size: 10px !important;
+    margin-bottom: 2px !important;
   }
   .payout-row.highlight {
-    font-size: 16px !important;
-    font-weight: 900 !important;
+    font-size: 12px !important;
+    margin-top: 2px !important;
+    padding-top: 2px !important;
+  }
+  .result-details {
+    background: rgba(0, 0, 0, 0.25) !important;
+    border-radius: 8px !important;
+    padding: 5px 8px !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+  .details-title {
+    font-size: 10px !important;
+    font-weight: 800 !important;
+    margin-bottom: 3px !important;
+  }
+  .full-rank-row {
+    font-size: 9.5px !important;
+    padding: 1.5px 3px !important;
+    line-height: 1.2 !important;
+  }
+  .fr-num { width: 22px !important; font-size: 9.5px !important; }
+  .fr-lane { width: 42px !important; font-size: 9.5px !important; }
+  .modal-actions {
+    margin-top: 4px !important;
+    padding-bottom: 8px !important;
   }
   .btn-next-race {
-    padding: 10px !important;
-    font-size: 15px !important;
+    padding: 9px 16px !important;
+    font-size: 13.5px !important;
     font-weight: 800 !important;
-    border-radius: 10px !important;
+    border-radius: 8px !important;
   }
 }
 
@@ -2916,63 +3020,94 @@ body.mobile-landscape-mode .feed-comment {
 
 body.mobile-landscape-mode .leaderboard-panel {
   bottom: 4px !important;
-  left: max(8px, env(safe-area-inset-left)) !important;
-  width: min(155px, 22vw) !important;
-  max-height: min(140px, 48vh) !important;
-  padding: 3px 5px !important;
+  left: max(6px, env(safe-area-inset-left)) !important;
+  width: min(175px, 24vw) !important;
+  max-height: calc(100vh - 46px) !important;
+  padding: 2px 4px !important;
   border-radius: 6px !important;
-  background: rgba(15, 23, 42, 0.75) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  background: rgba(15, 23, 42, 0.85) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  backdrop-filter: blur(8px) !important;
   overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  z-index: 25 !important;
 }
 body.mobile-landscape-mode .lb-header {
   margin-bottom: 2px !important;
-  padding-bottom: 1px !important;
+  padding: 0 2px 1px 2px !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
 }
 body.mobile-landscape-mode .lb-title {
-  font-size: 10px !important;
+  font-size: 9.5px !important;
   font-weight: 800 !important;
+  line-height: 1.1 !important;
+  color: #fff !important;
 }
 body.mobile-landscape-mode .lb-sub {
   display: none !important;
 }
-body.mobile-landscape-mode .lb-rows {
+body.mobile-landscape-mode .lb-list {
+  display: flex !important;
+  flex-direction: column !important;
   gap: 1.5px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  max-height: calc(100vh - 65px) !important;
+  overflow-y: auto !important;
+  scrollbar-width: thin !important;
 }
 body.mobile-landscape-mode .leaderboard-item {
-  padding: 1px 3px !important;
-  font-size: 9.5px !important;
+  padding: 0 3px !important;
+  font-size: 8.5px !important;
   gap: 2px !important;
-  border-radius: 3px !important;
-  height: 13.5px !important;
-  margin-bottom: 1px !important;
+  border-radius: 2px !important;
+  height: 12.5px !important;
+  line-height: 12.5px !important;
+  margin: 0 !important;
+  display: flex !important;
+  align-items: center !important;
 }
 body.mobile-landscape-mode .lb-rank {
-  width: 13px !important;
-  font-size: 9.5px !important;
+  width: 14px !important;
+  font-size: 8.5px !important;
   font-weight: 800 !important;
+  flex-shrink: 0 !important;
 }
 body.mobile-landscape-mode .lb-lane {
-  font-size: 8.5px !important;
+  font-size: 7.5px !important;
   padding: 0 2px !important;
+  border-radius: 2px !important;
+  font-weight: 800 !important;
+  flex-shrink: 0 !important;
 }
 body.mobile-landscape-mode .lb-name {
-  font-size: 9.5px !important;
-  max-width: 50px !important;
+  font-size: 8.5px !important;
+  font-weight: 700 !important;
+  max-width: 62px !important;
   white-space: nowrap !important;
   overflow: hidden !important;
   text-overflow: ellipsis !important;
+  flex-shrink: 1 !important;
 }
 body.mobile-landscape-mode .lb-bettor {
-  display: none !important;
+  font-size: 7.5px !important;
+  color: #facc15 !important;
+  font-weight: 700 !important;
+  margin-left: 1px !important;
 }
 body.mobile-landscape-mode .lb-status {
-  font-size: 8.5px !important;
+  font-size: 8px !important;
+  line-height: 1 !important;
+  flex-shrink: 0 !important;
 }
 body.mobile-landscape-mode .lb-dist {
-  font-size: 9.5px !important;
-  font-weight: 700 !important;
+  font-size: 8.5px !important;
+  font-weight: 800 !important;
+  font-family: monospace !important;
   margin-left: auto !important;
+  flex-shrink: 0 !important;
+  color: #38bdf8 !important;
 }
 
 body.mobile-landscape-mode .announcement-box {
@@ -2981,41 +3116,101 @@ body.mobile-landscape-mode .announcement-box {
   top: 45% !important;
 }
 
+/* 5. 결과 모달 모바일 가로 최적화 & 완벽한 하단 스크롤 보장 */
+body.mobile-landscape-mode .modal-overlay {
+  padding: max(8px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left)) !important;
+}
 body.mobile-landscape-mode .modal-card {
-  max-height: 92vh !important;
-  overflow-y: auto !important;
-  padding: 12px 16px !important;
-  max-width: 440px !important;
-  border-radius: 14px !important;
+  margin: auto !important;
+  width: min(520px, 94vw) !important;
+  max-width: 520px !important;
+  max-height: none !important;
+  overflow: visible !important;
+  padding: 10px 14px !important;
+  gap: 6px !important;
+  border-radius: 12px !important;
 }
 body.mobile-landscape-mode .result-title {
-  font-size: 18px !important;
-  font-weight: 900 !important;
+  font-size: 16px !important;
+  line-height: 1.2 !important;
+  margin: 0 !important;
 }
 body.mobile-landscape-mode .result-msg {
-  font-size: 13px !important;
+  font-size: 11px !important;
+  line-height: 1.2 !important;
+  margin: 0 !important;
 }
-body.mobile-landscape-mode .podium-step {
-  height: 55px !important;
-  padding: 4px 2px !important;
-  font-size: 13px !important;
+body.mobile-landscape-mode .result-podium {
+  height: 65px !important;
+  margin: 3px 0 !important;
+  gap: 6px !important;
+}
+body.mobile-landscape-mode .podium-col {
+  width: 78px !important;
+}
+body.mobile-landscape-mode .podium-crown {
+  font-size: 1.1rem !important;
+  margin-bottom: 1px !important;
 }
 body.mobile-landscape-mode .podium-swimmer {
-  font-size: 13px !important;
+  font-size: 10px !important;
   font-weight: 700 !important;
+  margin-bottom: 2px !important;
+}
+body.mobile-landscape-mode .podium-bettor {
+  font-size: 8.5px !important;
+  padding: 1px 4px !important;
+  margin-bottom: 2px !important;
+}
+body.mobile-landscape-mode .podium-step {
+  padding: 2px !important;
+  font-size: 10px !important;
+}
+body.mobile-landscape-mode .step-1 { height: 40px !important; }
+body.mobile-landscape-mode .step-2 { height: 28px !important; }
+body.mobile-landscape-mode .step-3 { height: 18px !important; }
+body.mobile-landscape-mode .result-payout {
+  padding: 5px 10px !important;
+  margin: 0 !important;
+  border-radius: 8px !important;
 }
 body.mobile-landscape-mode .payout-row {
-  font-size: 13px !important;
+  font-size: 10px !important;
+  margin-bottom: 2px !important;
 }
 body.mobile-landscape-mode .payout-row.highlight {
-  font-size: 16px !important;
-  font-weight: 900 !important;
+  font-size: 12px !important;
+  margin-top: 2px !important;
+  padding-top: 2px !important;
+}
+body.mobile-landscape-mode .result-details {
+  background: rgba(0, 0, 0, 0.25) !important;
+  border-radius: 8px !important;
+  padding: 5px 8px !important;
+  max-height: none !important;
+  overflow: visible !important;
+}
+body.mobile-landscape-mode .details-title {
+  font-size: 10px !important;
+  font-weight: 800 !important;
+  margin-bottom: 3px !important;
+}
+body.mobile-landscape-mode .full-rank-row {
+  font-size: 9.5px !important;
+  padding: 1.5px 3px !important;
+  line-height: 1.2 !important;
+}
+body.mobile-landscape-mode .fr-num { width: 22px !important; font-size: 9.5px !important; }
+body.mobile-landscape-mode .fr-lane { width: 42px !important; font-size: 9.5px !important; }
+body.mobile-landscape-mode .modal-actions {
+  margin-top: 4px !important;
+  padding-bottom: 8px !important;
 }
 body.mobile-landscape-mode .btn-next-race {
-  padding: 10px !important;
-  font-size: 15px !important;
+  padding: 9px 16px !important;
+  font-size: 13.5px !important;
   font-weight: 800 !important;
-  border-radius: 10px !important;
+  border-radius: 8px !important;
 }
 
 
