@@ -1398,6 +1398,9 @@ body {
   font-size: 0.82rem;
   color: #fee2e2;
   margin: 0;
+  line-height: 1.35;
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 /* 리더보드 & 결과창 배터 표시 */
@@ -2209,13 +2212,13 @@ body {
     box-shadow: 0 0 6px var(--accent-gold) !important;
   }
 
-  /* 우측 상단 돌발상황 스택 피드: 상단 툴바 바로 아래 우측 상단에 정렬 (경기에 방해 안되는 최적화 사이즈) */
+  /* 우측 상단 돌발상황 스택 피드: 상단 툴바 바로 아래 우측 상단에 정렬 (미니맵과 안전 거리 유지 및 텍스트 전체 표시) */
   .incident-stack {
     top: 4px !important;
     right: max(8px, env(safe-area-inset-right)) !important;
     left: auto !important;
-    width: min(190px, 24vw) !important;
-    max-width: calc(50vw - 115px) !important;
+    width: min(230px, 28vw) !important;
+    max-width: calc(50vw - 125px) !important;
     gap: 3px !important;
     z-index: 25 !important;
     pointer-events: none !important;
@@ -2283,11 +2286,11 @@ body {
   .feed-comment {
     font-size: 9.5px !important;
     color: #f1f5f9 !important;
-    line-height: 1.2 !important;
-    white-space: nowrap !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-    max-width: 130px !important;
+    line-height: 1.25 !important;
+    white-space: normal !important;
+    word-break: keep-all !important;
+    overflow-wrap: break-word !important;
+    max-width: 100% !important;
     margin: 0 !important;
   }
 
@@ -2941,8 +2944,8 @@ body.mobile-landscape-mode .incident-stack {
   top: 4px !important;
   right: max(8px, env(safe-area-inset-right)) !important;
   left: auto !important;
-  width: min(190px, 24vw) !important;
-  max-width: calc(50vw - 115px) !important;
+  width: min(230px, 28vw) !important;
+  max-width: calc(50vw - 125px) !important;
   gap: 3px !important;
   z-index: 25 !important;
   pointer-events: none !important;
@@ -3010,11 +3013,11 @@ body.mobile-landscape-mode .feed-incident-name {
 body.mobile-landscape-mode .feed-comment {
   font-size: 9.5px !important;
   color: #f1f5f9 !important;
-  line-height: 1.2 !important;
-  white-space: nowrap !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
-  max-width: 130px !important;
+  line-height: 1.25 !important;
+  white-space: normal !important;
+  word-break: keep-all !important;
+  overflow-wrap: break-word !important;
+  max-width: 100% !important;
   margin: 0 !important;
 }
 
