@@ -1,6 +1,7 @@
 import { generateRacePlan } from './ComicIncidents.js';
 import { SWIMMERS_DATA } from './SwimmerData.js';
 import { soundManager } from '../audio/SoundManager.js';
+import { voiceCaster } from '../audio/VoiceCaster.js';
 import confetti from 'canvas-confetti';
 
 /**
@@ -37,10 +38,12 @@ export class GameManager {
 
     this.sprintClimaxTriggered = false;
     this.wakeLock = null;
+    this.currentPenalty = '☕ 커피 쏘기';
   }
 
   loadSavedBettors() {
     try {
+      this.currentPenalty = localStorage.getItem('comic_swim_penalty') || '☕ 커피 쏘기';
       const saved = localStorage.getItem('comic_swim_bettors');
       if (saved) {
         const map = JSON.parse(saved);
@@ -91,7 +94,34 @@ export class GameManager {
     });
 
     this.uiManager.updateWallet(this.playerCoins);
-    this.uiManager.showBettingScreen(SWIMMERS_DATA, this.selectedLane, this.betAmount);
+    this.uiManager.showBettingScreen(SWIMMERS_DATA, this.selectedLane, this.betAmount, this.currentPenalty);
+  }
+
+  // 벌칙 설정 (커스텀 벌칙 선택기)
+  setPenalty(penalty) {
+    this.currentPenalty = penalty || '☕ 커피 쏘기';
+    try {
+      localStorage.setItem('comic_swim_penalty', this.currentPenalty);
+    } catch (e) {}
+  }
+
+  // 내기 참가자 이름 8개 레인에 무작위 셔플
+  shuffleBettorNames() {
+    const defaultNames = ['철수', '영희', '부장님', '과장님', '대리님', '막내', '민수', '팀장님'];
+    let currentNames = SWIMMERS_DATA.map(s => s.bettorName).filter(n => n && n.trim() !== '');
+    if (currentNames.length < 2) {
+      currentNames = [...defaultNames];
+    }
+    // Fisher-Yates shuffle
+    for (let i = currentNames.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [currentNames[i], currentNames[j]] = [currentNames[j], currentNames[i]];
+    }
+    SWIMMERS_DATA.forEach((s, idx) => {
+      s.bettorName = currentNames[idx % currentNames.length] || '';
+    });
+    this.saveBettorNames();
+    this.uiManager.renderQuickBettorBar(SWIMMERS_DATA);
   }
 
   // 배팅 레인 선택
@@ -127,6 +157,9 @@ export class GameManager {
 
     this.playerCoins -= this.betAmount;
     this.uiManager.updateWallet(this.playerCoins);
+
+    // 모바일 오디오 언락
+    voiceCaster.unlock();
 
     // 1. 올림픽 선수 소개 인트로 시작!
     this.state = 'INTRO';
@@ -223,6 +256,10 @@ export class GameManager {
     this.uiManager.showAnnouncement("GO! GO! GO!");
     soundManager.playStartBeep();
 
+    // AI 스포츠 캐스터 출발 중계
+    voiceCaster.unlock();
+    voiceCaster.speakRaceStart();
+
     // 모바일 햅틱 진동 (출발 버저 비프)
     if ('vibrate' in navigator) {
       try { navigator.vibrate([120]); } catch (e) {}
@@ -318,6 +355,9 @@ export class GameManager {
             newsText: comment
           });
 
+          // AI 캐스터 돌발 상황 속보 음성 중계
+          voiceCaster.speakIncident(swimmer.data.name, swimmer.data.bettorName, plan.incident.id);
+
           // 돌발 상황 알림 (3.8초 표시 후 퇴장, 오버레이 방지)
           this.uiManager.pushIncidentAlert(swimmer.data.name, swimmer.lane, plan.incident, comment, swimmer.data.bettorName);
         }
@@ -348,6 +388,7 @@ export class GameManager {
               leaderName: `1ST: L${swimmer.lane} ${swimmer.data.name} ${bettorTag}`,
               newsText: `1위 골인! ${swimmer.data.name} 선수가 우승을 차지했습니다!`
             });
+            voiceCaster.speakWinner(swimmer.data.name, swimmer.data.bettorName);
           } else {
             this.sceneManager.pool.updateScoreboard({
               statusText: `TOUCHPAD: ${rank}위 통과`,
@@ -367,6 +408,7 @@ export class GameManager {
       if (!this.sprintClimaxTriggered && leader && leader.progressZ >= 40.0) {
         this.sprintClimaxTriggered = true;
         soundManager.playSprintClimax();
+        voiceCaster.speakClimax(leader.data.name);
         if ('vibrate' in navigator) {
           try { navigator.vibrate([80, 50, 80]); } catch (e) {}
         }
@@ -422,6 +464,9 @@ export class GameManager {
     }
 
     const rankedSwimmers = this.finishOrder.map(lane => this.sceneManager.getSwimmerByLane(lane));
+    const loser = rankedSwimmers[rankedSwimmers.length - 1];
+    voiceCaster.speakPenalty(loser?.data?.name, loser?.data?.bettorName, this.currentPenalty);
+
     this.uiManager.showResultModal({
       userLane: this.selectedLane,
       userRank: userRank,
@@ -429,7 +474,8 @@ export class GameManager {
       winCoins: winCoins,
       multiplier: multiplier,
       rankedSwimmers: rankedSwimmers,
-      totalCoins: this.playerCoins
+      totalCoins: this.playerCoins,
+      currentPenalty: this.currentPenalty
     });
   }
 

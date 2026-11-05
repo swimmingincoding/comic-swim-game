@@ -44,8 +44,8 @@ export class UIManager {
     this.currentSelectedLane = 4;
   }
 
-  setCallbacks({ onSelectLane, onSetBetAmount, onSetBettorName, onStartRace, onNextIntro, onSkipIntro, onResetRace, onChangeCamera, onMuteToggle, onRefillCoins, onFocusSwimmer }) {
-    this.callbacks = { onSelectLane, onSetBetAmount, onSetBettorName, onStartRace, onNextIntro, onSkipIntro, onResetRace, onChangeCamera, onMuteToggle, onRefillCoins, onFocusSwimmer };
+  setCallbacks(callbacks) {
+    this.callbacks = callbacks;
     this.bindEvents();
   }
 
@@ -55,6 +55,68 @@ export class UIManager {
       muteBtn.addEventListener('click', () => {
         const isMuted = this.callbacks.onMuteToggle();
         muteBtn.textContent = isMuted ? '🔇' : '🔊';
+      });
+    }
+
+    const voiceBtn = document.getElementById('btn-voice');
+    if (voiceBtn) {
+      voiceBtn.addEventListener('click', () => {
+        const isVoiceOn = this.callbacks.onToggleVoice ? this.callbacks.onToggleVoice() : true;
+        voiceBtn.classList.toggle('active', isVoiceOn);
+        voiceBtn.textContent = isVoiceOn ? '🎙️' : '🔇';
+        voiceBtn.title = isVoiceOn ? 'AI 스포츠 캐스터 음성 중계: ON' : 'AI 스포츠 캐스터 음성 중계: OFF';
+        this.showToast(isVoiceOn ? '🎙️ AI 스포츠 캐스터 음성 중계가 켜졌습니다!' : '🔇 AI 음성 중계가 꺼졌습니다.');
+        soundManager.playClick();
+      });
+    }
+
+    const shuffleBtn = document.getElementById('btn-shuffle-bettors');
+    if (shuffleBtn) {
+      shuffleBtn.addEventListener('click', () => {
+        if (this.callbacks.onShuffleBettors) {
+          this.callbacks.onShuffleBettors();
+          this.showToast('🎲 참가자 이름이 8개 레인에 무작위 셔플되었습니다!');
+          soundManager.playClick();
+        }
+      });
+    }
+
+    // 벌칙 프리셋 버튼들
+    const penaltyBtns = document.querySelectorAll('.penalty-preset-btn');
+    const customPenaltyInput = document.getElementById('custom-penalty-input');
+
+    penaltyBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        penaltyBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const penalty = btn.dataset.penalty;
+
+        if (penalty === 'custom') {
+          if (customPenaltyInput) {
+            customPenaltyInput.classList.remove('hidden');
+            customPenaltyInput.focus();
+            if (this.callbacks.onSetPenalty) {
+              this.callbacks.onSetPenalty(customPenaltyInput.value.trim() || '벌칙 당첨');
+            }
+          }
+        } else {
+          if (customPenaltyInput) {
+            customPenaltyInput.classList.add('hidden');
+          }
+          if (this.callbacks.onSetPenalty) {
+            this.callbacks.onSetPenalty(penalty);
+          }
+        }
+        soundManager.playClick();
+      });
+    });
+
+    if (customPenaltyInput) {
+      customPenaltyInput.addEventListener('input', (e) => {
+        const val = e.target.value.trim();
+        if (this.callbacks.onSetPenalty) {
+          this.callbacks.onSetPenalty(val || '벌칙 당첨');
+        }
       });
     }
 
@@ -242,6 +304,14 @@ export class UIManager {
         this.callbacks.onResetRace();
       });
     }
+
+    // 결과 단톡방 클립보드 복사 버튼
+    const copyResultBtn = document.getElementById('btn-copy-result');
+    if (copyResultBtn) {
+      copyResultBtn.addEventListener('click', () => {
+        this.copyResultToClipboard();
+      });
+    }
   }
 
   setActiveCamButton(mode) {
@@ -278,7 +348,7 @@ export class UIManager {
     }
   }
 
-  showBettingScreen(swimmers, selectedLane, betAmount) {
+  showBettingScreen(swimmers, selectedLane, betAmount, currentPenalty) {
     this.setElementVisible(this.bettingScreen, true, 'flex');
     this.setElementVisible(this.introScreen, false);
     this.setElementVisible(this.raceHud, false);
@@ -289,6 +359,27 @@ export class UIManager {
     this.renderQuickBettorBar(swimmers);
     this.renderSwimmerCards(swimmers, selectedLane);
     this.updateBetAmount(betAmount);
+
+    // 벌칙 프리셋 버튼 동기화
+    if (currentPenalty) {
+      const penaltyBtns = document.querySelectorAll('.penalty-preset-btn');
+      const customInput = document.getElementById('custom-penalty-input');
+      let foundPreset = false;
+      penaltyBtns.forEach(btn => {
+        const p = btn.dataset.penalty;
+        const isMatch = (p === currentPenalty);
+        btn.classList.toggle('active', isMatch);
+        if (isMatch) foundPreset = true;
+      });
+      if (!foundPreset && customInput) {
+        const customBtn = document.querySelector('.penalty-preset-btn[data-penalty="custom"]');
+        if (customBtn) customBtn.classList.add('active');
+        customInput.classList.remove('hidden');
+        customInput.value = currentPenalty;
+      } else if (customInput) {
+        customInput.classList.add('hidden');
+      }
+    }
   }
 
   // 상단 8인 빠른 내기 명단 등록 바 렌더링
@@ -622,7 +713,8 @@ export class UIManager {
   }
 
   // 경기 결과 모달
-  showResultModal({ userLane, userRank, betAmount, winCoins, multiplier, rankedSwimmers, totalCoins }) {
+  showResultModal({ userLane, userRank, betAmount, winCoins, multiplier, rankedSwimmers, totalCoins, currentPenalty }) {
+    this.lastResultData = { userLane, userRank, betAmount, winCoins, multiplier, rankedSwimmers, totalCoins, currentPenalty };
     this.setElementVisible(this.resultModal, true, 'flex');
 
     const titleEl = document.getElementById('result-title');
@@ -708,9 +800,10 @@ export class UIManager {
       const loserSwimmer = `${loser?.data.flag || '🏊'} ${loser?.data.name || ''} (L${loser?.lane || ''})`;
       const incidentDesc = loser?.incident ? `${loser.incident.emoji} ${loser.incident.name}` : '체력 방전 거북이 수영';
       const isUserLoser = (loser?.lane === userLane);
+      const penaltyName = currentPenalty || '☕ 커피 쏘기';
 
       penaltyEl.innerHTML = `
-        <div class="penalty-badge">☕ 오늘의 내기 꼴찌 벌칙 당첨자 (8등 최하위) 💸</div>
+        <div class="penalty-badge">😈 오늘의 8위 꼴찌 【 ${penaltyName} 】 당첨자! 💸</div>
         <div class="penalty-card-inner ${isUserLoser ? 'penalty-my-bet' : ''}">
           <div class="penalty-left-icon">😈</div>
           <div class="penalty-body">
@@ -722,7 +815,7 @@ export class UIManager {
               💥 사유: <strong>${incidentDesc}</strong>의 늪에 빠져 끝내 8등 침몰!
             </div>
             <div class="penalty-quote">
-              ${isUserLoser ? '😱 "아이고 배터님! 오늘 커피/벌칙은 당신의 몫입니다... ☕"' : '🎉 "축하합니다(?) 오늘의 커피/벌칙 잘 마시겠습니다! ☕"'}
+              ${isUserLoser ? `😱 "아이고 배터님! 오늘 [${penaltyName}]은 당신의 몫입니다... 💸"` : `🎉 "축하합니다(?) 오늘 [${penaltyName}] 잘 먹겠습니다! 👏"`}
             </div>
           </div>
         </div>
@@ -746,5 +839,71 @@ export class UIManager {
         `;
       }).join('');
     }
+  }
+
+  // 토스트 메시지 안내 (3초)
+  showToast(msg) {
+    const toast = document.getElementById('toast-notification');
+    if (!toast) return;
+    toast.textContent = msg;
+    toast.classList.remove('hidden');
+    toast.classList.add('show');
+    clearTimeout(this.toastTimer);
+    this.toastTimer = setTimeout(() => {
+      toast.classList.remove('show');
+      setTimeout(() => toast.classList.add('hidden'), 300);
+    }, 3000);
+  }
+
+  // 단톡방(카카오톡/슬랙) 공유용 결과 텍스트 클립보드 복사
+  copyResultToClipboard() {
+    if (!this.lastResultData) return;
+    const { rankedSwimmers, currentPenalty, userLane, userRank } = this.lastResultData;
+    const penalty = currentPenalty || '☕ 커피 쏘기';
+
+    let text = `🏊‍♂️ [올림픽 코믹 수영 50m 레이스 결과] 🏊‍♂️\n`;
+    text += `🎯 오늘의 8위 꼴찌 벌칙: 【 ${penalty} 】\n\n`;
+
+    rankedSwimmers.forEach((s, idx) => {
+      const rank = idx + 1;
+      const medal = rank === 1 ? '🥇' : (rank === 2 ? '🥈' : (rank === 3 ? '🥉' : `${rank}위`));
+      const bettor = s.data.bettorName ? `[배터: ${s.data.bettorName}]` : '';
+      const myTag = (s.lane === userLane) ? ' ⭐(내 픽)' : '';
+      const note = rank === 1 ? '✨ 우승!' : (rank === 8 ? `😈 ${penalty} 당첨!` : '');
+      text += `${medal} L${s.lane} ${s.data.name} ${bettor}${myTag} ${note}\n`;
+    });
+
+    const loser = rankedSwimmers[rankedSwimmers.length - 1];
+    const loserBettor = loser?.data.bettorName ? `【 ${loser.data.bettorName} 】` : `L${loser?.lane} ${loser?.data?.name}`;
+    text += `\n👉 ${loserBettor} 님! [ ${penalty} ] 당첨을 축하(?)합니다! 🎉\n`;
+    text += `🎮 게임 링크: https://swimmingincoding.github.io/comic-swim-game/`;
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(() => {
+        this.showToast('📋 단톡방 공유용 결과가 복사되었습니다! 카톡/슬랙에 붙여넣기(Ctrl+V)하세요!');
+        soundManager.playClick();
+      }).catch(() => {
+        this.fallbackCopyText(text);
+      });
+    } else {
+      this.fallbackCopyText(text);
+    }
+  }
+
+  fallbackCopyText(text) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try {
+      document.execCommand('copy');
+      this.showToast('📋 단톡방 공유용 결과가 복사되었습니다! 카톡/슬랙에 붙여넣기(Ctrl+V)하세요!');
+      soundManager.playClick();
+    } catch (e) {
+      alert('클립보드 복사 권한이 없습니다.');
+    }
+    document.body.removeChild(ta);
   }
 }

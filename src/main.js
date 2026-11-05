@@ -3,6 +3,7 @@ import { SceneManager } from './three/SceneManager.js';
 import { UIManager } from './ui/UIManager.js';
 import { GameManager } from './game/GameManager.js';
 import { soundManager } from './audio/SoundManager.js';
+import { voiceCaster } from './audio/VoiceCaster.js';
 
 function init() {
   const container = document.getElementById('canvas-container');
@@ -45,7 +46,18 @@ function init() {
       sceneManager.focusSwimmerTemporarily(lane, 3.0);
     },
     onMuteToggle: () => {
-      return soundManager.toggleMute();
+      const isMuted = soundManager.toggleMute();
+      voiceCaster.setMuted(isMuted);
+      return isMuted;
+    },
+    onToggleVoice: () => {
+      return voiceCaster.toggleVoice();
+    },
+    onSetPenalty: (penalty) => {
+      gameManager.setPenalty(penalty);
+    },
+    onShuffleBettors: () => {
+      gameManager.shuffleBettorNames();
     },
     onRefillCoins: () => {
       if (gameManager.playerCoins < 500) {

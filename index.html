@@ -56,6 +56,7 @@
         <button id="btn-refill" class="refill-btn" title="코인이 부족할 때 무료 충전">+</button>
       </div>
       <button id="btn-toggle-mobile" class="icon-btn" title="모바일 가로 뷰 시뮬레이터 (Mobile Landscape View)">📱</button>
+      <button id="btn-voice" class="icon-btn active" title="AI 스포츠 캐스터 음성 중계 (ON/OFF)">🎙️</button>
       <button id="btn-fullscreen" class="icon-btn" title="모바일 전체화면 (Fullscreen)">⛶</button>
       <button id="btn-mute" class="icon-btn" title="사운드 온/오프">🔊</button>
     </div>
@@ -81,8 +82,9 @@
             <span class="registry-desc">각 레인에 배팅한 사람의 이름을 적어주세요! 경기 중 순위표와 자막에 표시됩니다.</span>
           </div>
           <div class="registry-actions">
+            <button id="btn-shuffle-bettors" class="btn-auto-fill" title="등록된 참가자 이름을 레인에 무작위 셔플">🎲 레인 셔플</button>
             <button id="btn-batch-paste-bettors" class="btn-batch-paste" title="쉼표로 8명 이름 한번에 붙여넣기">📋 명단 일괄 입력</button>
-            <button id="btn-auto-fill-bettors" class="btn-auto-fill" title="철수, 영희, 부장님 등 예시 이름으로 자동 채우기">🎲 예시 이름 채우기</button>
+            <button id="btn-auto-fill-bettors" class="btn-auto-fill" title="철수, 영희, 부장님 등 예시 이름으로 자동 채우기">✨ 예시 채우기</button>
           </div>
         </div>
         <div id="bettor-quick-inputs" class="registry-inputs-grid">
@@ -114,6 +116,19 @@
           <button class="chip-btn" data-val="5000">+5,000</button>
           <button class="chip-btn" data-val="half">절반</button>
           <button class="chip-btn" data-val="max">올인</button>
+        </div>
+
+        <!-- 오늘의 내기 벌칙 선택기 -->
+        <div class="dock-penalty-picker">
+          <span class="penalty-picker-label">☕ 8위 꼴찌 벌칙:</span>
+          <div class="penalty-preset-buttons">
+            <button type="button" class="penalty-preset-btn active" data-penalty="☕ 커피 쏘기">☕ 커피</button>
+            <button type="button" class="penalty-preset-btn" data-penalty="🍕 점심 쏘기">🍕 점심</button>
+            <button type="button" class="penalty-preset-btn" data-penalty="🍺 맥주 쏘기">🍺 맥주</button>
+            <button type="button" class="penalty-preset-btn" data-penalty="🧹 분리수거">🧹 분리수거</button>
+            <button type="button" class="penalty-preset-btn" data-penalty="custom">✏️ 직접입력</button>
+          </div>
+          <input type="text" id="custom-penalty-input" class="custom-penalty-input hidden" placeholder="벌칙 직접 입력 (예: 아이스크림)" maxlength="15">
         </div>
 
         <div class="dock-inputs">
@@ -245,11 +260,15 @@
       </div>
 
       <div class="modal-actions">
+        <button id="btn-copy-result" class="btn-copy-result" title="카카오톡/슬랙 단톡방 공유용 텍스트 복사">📋 단톡방 결과 복사 (카톡/슬랙)</button>
         <button id="btn-next-race" class="btn-next-race">🔄 다음 경기 준비 (NEXT RACE)</button>
       </div>
     </div>
   </div>
 
-  <script type="module" src="./src/main.js?v=10"></script>
+  <!-- 토스트 알림 (클립보드 복사 등) -->
+  <div id="toast-notification" class="toast-notification hidden"></div>
+
+  <script type="module" src="./src/main.js?v=11"></script>
 </body>
 </html>

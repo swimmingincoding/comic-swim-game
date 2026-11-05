@@ -280,36 +280,136 @@ export class SwimmerModel {
     this.meshGroup.add(this.bubbleSprite);
   }
 
-  showEmoji(emoji) {
+  showEmoji(incidentOrEmoji) {
     const ctx = this.bubbleCtx;
     ctx.clearRect(0, 0, 256, 256);
 
-    ctx.fillStyle = '#ffffff';
+    const emoji = typeof incidentOrEmoji === 'string' ? incidentOrEmoji : (incidentOrEmoji?.emoji || '❓');
+    const incidentId = incidentOrEmoji?.id || '';
+    const incidentName = incidentOrEmoji?.name || '';
+
+    // 상황별 테마 색상 및 단축 태그
+    let strokeColor = '#ef4444';
+    let bgColor = '#ffffff';
+    let tagText = '돌발상황!';
+
+    switch (incidentId) {
+      case 'CRAMP':
+        strokeColor = '#eab308'; // 옐로우
+        tagText = '⚡ 쥐 났다!';
+        break;
+      case 'U_TURN':
+        strokeColor = '#f97316'; // 오렌지
+        tagText = '↩️ 가스불!';
+        break;
+      case 'ROPE_REST':
+        strokeColor = '#ec4899'; // 핑크
+        tagText = '🛑 로프휴식';
+        break;
+      case 'SLOW_DOWN':
+        strokeColor = '#06b6d4'; // 시안
+        tagText = '🐢 배터리0%';
+        break;
+      case 'GOGGLES_LOST':
+        strokeColor = '#8b5cf6'; // 퍼플
+        tagText = '👓 물안경?!';
+        break;
+      case 'EARLY_CELEBRATION':
+        strokeColor = '#f59e0b'; // 앰버
+        tagText = '🎉 설레발!';
+        break;
+      case 'BELLY_FLOP':
+        strokeColor = '#dc2626'; // 레드
+        tagText = '💥 배치기!';
+        break;
+      default:
+        tagText = incidentName ? incidentName.slice(0, 5) : '돌발상황!';
+    }
+
+    ctx.save();
+    // 말풍선 외곽 그림자
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+    ctx.shadowBlur = 12;
+    ctx.shadowOffsetY = 6;
+
+    // 만화 스타일 말풍선 본체
     ctx.beginPath();
-    ctx.arc(128, 115, 95, 0, Math.PI * 2);
+    ctx.roundRect(16, 16, 224, 180, [26]);
+    ctx.fillStyle = bgColor;
     ctx.fill();
-    ctx.strokeStyle = '#ef4444';
+
     ctx.lineWidth = 10;
+    ctx.strokeStyle = strokeColor;
     ctx.stroke();
 
+    // 말풍선 뾰족한 꼬리
     ctx.beginPath();
-    ctx.moveTo(128, 210);
-    ctx.lineTo(105, 245);
-    ctx.lineTo(150, 210);
-    ctx.fillStyle = '#ffffff';
+    ctx.moveTo(128, 196);
+    ctx.lineTo(108, 240);
+    ctx.lineTo(148, 196);
+    ctx.fillStyle = bgColor;
     ctx.fill();
+    ctx.lineWidth = 6;
+    ctx.strokeStyle = strokeColor;
+    ctx.stroke();
+    ctx.restore();
 
-    ctx.font = '90px sans-serif';
+    // 메인 이모지 렌더링
+    ctx.font = '84px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(emoji, 128, 115);
+    ctx.fillText(emoji, 128, 88);
+
+    // 하단 만화풍 태그 라벨
+    ctx.save();
+    ctx.fillStyle = strokeColor;
+    ctx.font = '900 24px "Noto Sans KR", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(tagText, 128, 156);
+    ctx.restore();
 
     this.bubbleTexture.needsUpdate = true;
     this.bubbleSprite.material.opacity = 1.0;
   }
 
+  showRecoveryBadge() {
+    const ctx = this.bubbleCtx;
+    ctx.clearRect(0, 0, 256, 256);
+
+    ctx.save();
+    ctx.shadowColor = 'rgba(16, 185, 129, 0.7)';
+    ctx.shadowBlur = 16;
+
+    ctx.beginPath();
+    ctx.roundRect(20, 40, 216, 140, [22]);
+    ctx.fillStyle = '#10b981';
+    ctx.fill();
+
+    ctx.lineWidth = 8;
+    ctx.strokeStyle = '#6ee7b7';
+    ctx.stroke();
+    ctx.restore();
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '900 32px "Noto Sans KR", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText("✨ 부활 질주!", 128, 110);
+
+    this.bubbleTexture.needsUpdate = true;
+    this.bubbleSprite.material.opacity = 1.0;
+    this.bubbleSprite.scale.set(1.4, 1.4, 1.4);
+
+    setTimeout(() => {
+      this.hideEmoji();
+    }, 900);
+  }
+
   hideEmoji() {
-    this.bubbleSprite.material.opacity = 0;
+    if (this.bubbleSprite) {
+      this.bubbleSprite.material.opacity = 0;
+    }
   }
 
   // 사실적인 백색 물보라(Splash) & 수중 기포 파티클
@@ -588,7 +688,7 @@ export class SwimmerModel {
     this.incidentActive = true;
     this.incidentTimer = 0;
     this.state = "INCIDENT";
-    this.showEmoji(incident.emoji);
+    this.showEmoji(incident);
   }
 
   // 매 프레임 업데이트 루프
@@ -689,10 +789,17 @@ export class SwimmerModel {
       const type = this.incident.id;
       const incidentDuration = this.incident.duration || 5.0;
 
+      // 3D 만화 말풍선 바운스 & 펄스 애니메이션
+      if (this.bubbleSprite && !racePlan.recovered) {
+        this.bubbleSprite.position.y = 1.35 + Math.sin(this.incidentTimer * 5.0) * 0.12;
+        const pulse = 1.45 + Math.sin(this.incidentTimer * 7.0) * 0.16;
+        this.bubbleSprite.scale.set(pulse, pulse, pulse);
+      }
+
       // 돌발 시간 경과 후 -> 리커버리하여 결승선(50m)으로 수영 재개!
       if (this.incidentTimer >= incidentDuration && !racePlan.recovered) {
         racePlan.recovered = true;
-        this.hideEmoji();
+        this.showRecoveryBadge();
         // 유턴했던 경우 방향 다시 원상복구
         this.meshGroup.rotation.y = 0;
         this.meshGroup.position.x = this.laneX;
