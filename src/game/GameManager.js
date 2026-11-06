@@ -400,8 +400,20 @@ export class GameManager {
         }
       });
 
-      // 실시간 순위 계산
-      const currentRanks = [...this.sceneManager.swimmers].sort((a, b) => b.progressZ - a.progressZ);
+      // 실시간 순위 계산:
+      // 이미 골인(50m 터치패드 접촉)한 선수는 finishOrder 순서대로 1위, 2위... 절대 불변 고정!
+      // 아직 레이스 중인 선수들은 그 뒤에 진행 거리(progressZ) 순으로 정렬
+      const currentRanks = [...this.sceneManager.swimmers].sort((a, b) => {
+        const aFinishIdx = this.finishOrder.indexOf(a.lane);
+        const bFinishIdx = this.finishOrder.indexOf(b.lane);
+
+        if (aFinishIdx !== -1 && bFinishIdx !== -1) {
+          return aFinishIdx - bFinishIdx; // 둘 다 골인: 먼저 터치한 순위 불변
+        }
+        if (aFinishIdx !== -1) return -1; // a만 골인: a가 앞
+        if (bFinishIdx !== -1) return 1;  // b만 골인: b가 앞
+        return b.progressZ - a.progressZ; // 미완주자끼리는 진행 거리순
+      });
       const leader = currentRanks[0];
 
       // 결승 10m 구간(40m 돌파) 관중 함성 고조 및 심장 박동 긴장감 비트
@@ -418,7 +430,8 @@ export class GameManager {
         timeStr,
         ranks: currentRanks,
         leader,
-        selectedLane: this.selectedLane
+        selectedLane: this.selectedLane,
+        finishOrder: this.finishOrder
       });
 
       // 종료 조건:
@@ -481,6 +494,10 @@ export class GameManager {
 
   getLeaderSwimmer() {
     if (!this.sceneManager || !this.sceneManager.swimmers) return null;
+    if (this.finishOrder && this.finishOrder.length > 0) {
+      const winner = this.sceneManager.getSwimmerByLane(this.finishOrder[0]);
+      if (winner) return winner;
+    }
     return [...this.sceneManager.swimmers].sort((a, b) => b.progressZ - a.progressZ)[0];
   }
 }

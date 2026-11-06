@@ -692,7 +692,7 @@ export class UIManager {
   }
 
   // 실시간 레이스 HUD (타이머, 순위표, 미니맵) 갱신
-  updateRaceHUD({ timeStr, ranks, leader, selectedLane }) {
+  updateRaceHUD({ timeStr, ranks, leader, selectedLane, finishOrder = [] }) {
     if (this.liveTimerDisplay) {
       this.liveTimerDisplay.textContent = timeStr;
     }
@@ -709,27 +709,53 @@ export class UIManager {
       }
     });
 
-    // 좌측 실시간 리더보드 (내기 배터 이름 포함)
+    // 좌측 실시간 리더보드 (가독성 극대화 & 골인 순위 100% 확정 고정)
     if (this.leaderboardContainer) {
       this.leaderboardContainer.innerHTML = ranks.map((s, idx) => {
         const isBet = (s.lane === selectedLane);
+        const isFinished = finishOrder.includes(s.lane);
+        const finishRank = isFinished ? (finishOrder.indexOf(s.lane) + 1) : null;
         const dist = Math.min(50, Math.max(0, s.progressZ)).toFixed(1);
-        const bettorTag = s.data.bettorName ? `<span class="lb-bettor">[${s.data.bettorName}]</span>` : '';
 
-        let statusBadge = '<span class="status-swimming">🏊‍♂️</span>';
-        if (s.state === 'INCIDENT') {
+        // 순위 표시 (1~3위 메달, 8위 벌칙 경고)
+        let rankBadge = `${idx + 1}`;
+        if (idx === 0) rankBadge = '🥇 1';
+        else if (idx === 1) rankBadge = '🥈 2';
+        else if (idx === 2) rankBadge = '🥉 3';
+        else if (idx === 7) rankBadge = '😈 8';
+
+        // 상태 및 골인 확정 표기
+        let statusBadge = '<span class="status-swimming">🏊</span>';
+        let distBadge = `<span class="lb-dist">${dist}m</span>`;
+
+        if (isFinished) {
+          statusBadge = '<span class="status-finish">🏁 터치</span>';
+          distBadge = `<span class="lb-dist lb-goal">🏁 ${finishRank}위 확정</span>`;
+        } else if (s.state === 'INCIDENT') {
           statusBadge = `<span class="status-incident" title="${s.incident.name}">${s.incident.emoji}</span>`;
-        } else if (s.state === 'FINISHED') {
-          statusBadge = '<span class="status-finish">🏁 터치!</span>';
+        }
+
+        // 배터 이름 최우선 가독성 표시
+        let nameHtml = '';
+        if (s.data.bettorName) {
+          nameHtml = `
+            <span class="lb-bettor-tag" title="배터: ${s.data.bettorName}">[${s.data.bettorName}]</span>
+            <span class="lb-swimmer-name">${s.data.name}</span>
+          `;
+        } else {
+          nameHtml = `<span class="lb-swimmer-name">${s.data.name}</span>`;
         }
 
         return `
-          <div class="leaderboard-item ${isBet ? 'highlight-bet' : ''} rank-${idx + 1}">
-            <span class="lb-rank">${idx + 1}위</span>
+          <div class="leaderboard-item ${isBet ? 'highlight-bet' : ''} ${isFinished ? 'is-finished' : ''} rank-${idx + 1}">
+            <span class="lb-rank">${rankBadge}</span>
             <span class="lb-lane lane-tag-${s.lane}">L${s.lane}</span>
-            <span class="lb-name">${s.data.name} ${bettorTag}</span>
+            <div class="lb-name-wrapper">
+              ${isBet ? '<span class="lb-my-tag">MY</span>' : ''}
+              ${nameHtml}
+            </div>
             <span class="lb-status">${statusBadge}</span>
-            <span class="lb-dist">${dist}m</span>
+            ${distBadge}
           </div>
         `;
       }).join('');
