@@ -73,7 +73,7 @@ export class TextureGenerator {
     return tex;
   }
 
-  // 2. 수면 노멀 맵 (Normal Map - 수면의 굴절과 반사광 입체화)
+  // 2. 수면 고정밀 3중 옥타브 노멀 맵 (Photorealistic Multi-Octave Normal Map)
   static createWaterNormal() {
     const canvas = document.createElement('canvas');
     canvas.width = 512;
@@ -82,19 +82,31 @@ export class TextureGenerator {
     const imgData = ctx.createImageData(512, 512);
     const data = imgData.data;
 
-    // 합성 사인파로 매끄러운 수면 노멀맵 생성
+    // 3중 중첩 파동 함수로 자연스러운 풍랑 및 미세 잔물결(Capillary Waves) 구현
     for (let x = 0; x < 512; x++) {
       for (let y = 0; y < 512; y++) {
-        const u = (x / 512) * Math.PI * 8;
-        const v = (y / 512) * Math.PI * 8;
+        const u = (x / 512) * Math.PI * 2;
+        const v = (y / 512) * Math.PI * 2;
 
-        const dx = Math.cos(u * 1.5 + Math.sin(v)) * 0.4 + Math.cos(u * 3.0) * 0.2;
-        const dy = Math.sin(v * 1.5 + Math.cos(u)) * 0.4 + Math.sin(v * 3.0) * 0.2;
+        // 1옥타브: 큰 너울 (Swell)
+        const d1x = Math.cos(u * 4.0 + Math.sin(v * 3.0)) * 0.45;
+        const d1y = Math.sin(v * 4.0 + Math.cos(u * 3.0)) * 0.45;
 
-        // 노멀 벡터 (dx, dy, 1.0)를 RGB로 변환 (R: X, G: Y, B: Z)
-        const nx = Math.floor((dx * 0.5 + 0.5) * 255);
-        const ny = Math.floor((dy * 0.5 + 0.5) * 255);
-        const nz = 230; // 푸른빛 노멀 축
+        // 2옥타브: 중주파 물결
+        const d2x = Math.cos(u * 10.0 + v * 6.0) * 0.25;
+        const d2y = Math.sin(v * 10.0 - u * 6.0) * 0.25;
+
+        // 3옥타브: 반짝이는 미세 요철 (High-frequency Sparkles)
+        const d3x = Math.cos(u * 22.0 - v * 14.0) * 0.12;
+        const d3y = Math.sin(v * 22.0 + u * 14.0) * 0.12;
+
+        const totalDx = d1x + d2x + d3x;
+        const totalDy = d1y + d2y + d3y;
+
+        // 탄젠트 공간 노멀 벡터 정규화
+        const nx = Math.floor(Math.min(255, Math.max(0, (totalDx * 0.5 + 0.5) * 255)));
+        const ny = Math.floor(Math.min(255, Math.max(0, (totalDy * 0.5 + 0.5) * 255)));
+        const nz = 240; // 강한 수직 노멀 성분
 
         const idx = (y * 512 + x) * 4;
         data[idx] = nx;
@@ -108,50 +120,73 @@ export class TextureGenerator {
     const tex = new THREE.CanvasTexture(canvas);
     tex.wrapS = THREE.RepeatWrapping;
     tex.wrapT = THREE.RepeatWrapping;
-    tex.repeat.set(6, 12);
+    tex.repeat.set(8, 16);
     return tex;
   }
 
-  // 3. 햇빛 카우스틱스 텍스처 (Caustics - 바닥에 일렁이는 영롱한 빛망울)
+  // 3. SIGGRAPH 표준 파동 간섭 기반 수영장 바닥 카우스틱스 (Voronoi/Interference Caustic Web)
   static createCausticsCanvas() {
+    const size = 256;
     const canvas = document.createElement('canvas');
-    canvas.width = 512;
-    canvas.height = 512;
+    canvas.width = size;
+    canvas.height = size;
     const ctx = canvas.getContext('2d');
+    const imgData = ctx.createImageData(size, size);
+    const data = imgData.data;
 
-    function drawCaustics(time) {
-      ctx.clearRect(0, 0, 512, 512);
-      ctx.fillStyle = '#000000';
-      ctx.fillRect(0, 0, 512, 512);
+    function renderCausticFrame(time) {
+      const t1 = time * 1.8;
+      const t2 = time * 1.3;
+      const t3 = time * 2.2;
 
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.12)';
-      ctx.filter = 'blur(6px)';
+      let ptr = 0;
+      for (let y = 0; y < size; y++) {
+        const ny = (y / size) * Math.PI * 4;
+        for (let x = 0; x < size; x++) {
+          const nx = (x / size) * Math.PI * 4;
 
-      // 보로노이/물결 망 형태의 광선 그물망
-      for (let i = 0; i < 28; i++) {
-        const cx = 256 + Math.sin(time * 0.8 + i * 0.7) * 200;
-        const cy = 256 + Math.cos(time * 0.9 + i * 0.5) * 200;
-        const r = 40 + Math.sin(time * 1.5 + i) * 20;
+          // 3중 파동 간섭장 (Wave Interference Field)
+          const w1 = Math.sin(nx * 1.5 + t1 + Math.cos(ny * 2.0));
+          const w2 = Math.cos(ny * 1.7 - t2 + Math.sin(nx * 2.3));
+          const w3 = Math.sin((nx + ny) * 2.1 + t3);
 
-        ctx.beginPath();
-        ctx.arc(cx, cy, r, 0, Math.PI * 2);
-        ctx.fill();
+          // 포커싱된 광선 수렴 현상 (Caustic Focus): 상위 15% 광선만 날카로운 네트(그물망)로 집속
+          const combined = (w1 + w2 + w3) / 3.0; // -1.0 ~ 1.0
+          const normalized = (combined + 1.0) * 0.5; // 0.0 ~ 1.0
+
+          // 지수 집중 함수 (날카로운 햇빛 굴절 그물망)
+          const caustic = Math.pow(normalized, 5.5) * 2.8;
+          const brightness = Math.min(255, Math.floor(caustic * 255));
+
+          // 맑은 아쿠아 에메랄드 틴트 (물속 굴절광)
+          data[ptr] = Math.min(255, Math.floor(brightness * 0.85));     // R
+          data[ptr + 1] = Math.min(255, Math.floor(brightness * 1.05)); // G (에메랄드)
+          data[ptr + 2] = brightness;                                   // B (블루)
+          data[ptr + 3] = brightness > 15 ? brightness : 0;             // Alpha
+
+          ptr += 4;
+        }
       }
-      ctx.filter = 'none';
+      ctx.putImageData(imgData, 0, 0);
     }
 
-    drawCaustics(0);
+    renderCausticFrame(0);
 
     const texture = new THREE.CanvasTexture(canvas);
     texture.wrapS = THREE.RepeatWrapping;
     texture.wrapT = THREE.RepeatWrapping;
-    texture.repeat.set(5, 10);
+    texture.repeat.set(6, 12);
 
+    let lastTime = 0;
     return {
       texture,
       update: (time) => {
-        drawCaustics(time);
-        texture.needsUpdate = true;
+        // 초당 약 30fps로 카우스틱스 텍스처를 갱신하여 60fps 렌더링 유지 & 자연스러운 유체 흐름
+        if (time - lastTime > 0.033) {
+          lastTime = time;
+          renderCausticFrame(time);
+          texture.needsUpdate = true;
+        }
       }
     };
   }

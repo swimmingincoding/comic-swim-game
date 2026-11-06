@@ -412,47 +412,88 @@ export class SwimmerModel {
     }
   }
 
-  // 사실적인 백색 물보라(Splash) & 수중 기포 파티클
+  // 사실적인 백색 물보라(Splash), 킥 포말(Foam) & 수중 기포 파티클
   buildRealisticSplash() {
-    // 1. 수면 위 백색 포말 물보라 (White Water Spray)
-    const sprayCount = 45;
+    // 물방울 원형 그라데이션 캔버스 텍스처 (자연스러운 둥근 포말)
+    const dropCanvas = document.createElement('canvas');
+    dropCanvas.width = 64;
+    dropCanvas.height = 64;
+    const dctx = dropCanvas.getContext('2d');
+    const dgrad = dctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+    dgrad.addColorStop(0, 'rgba(255, 255, 255, 1.0)');
+    dgrad.addColorStop(0.35, 'rgba(224, 242, 254, 0.7)');
+    dgrad.addColorStop(0.8, 'rgba(186, 230, 253, 0.25)');
+    dgrad.addColorStop(1, 'rgba(255, 255, 255, 0.0)');
+    dctx.fillStyle = dgrad;
+    dctx.fillRect(0, 0, 64, 64);
+    const dropTex = new THREE.CanvasTexture(dropCanvas);
+
+    // 1. 수면 위 하이 엘보 & 킥 백색 포말 물보라 (100개 고밀도 파티클)
+    const sprayCount = 100;
     const sprayGeo = new THREE.BufferGeometry();
     const sprayPos = new Float32Array(sprayCount * 3);
     const sprayVels = [];
 
     for (let i = 0; i < sprayCount; i++) {
-      sprayPos[i * 3] = (Math.random() - 0.5) * 0.7;
-      sprayPos[i * 3 + 1] = Math.random() * 0.2;
-      sprayPos[i * 3 + 2] = -Math.random() * 1.8;
+      sprayPos[i * 3] = (Math.random() - 0.5) * 0.75;
+      sprayPos[i * 3 + 1] = Math.random() * 0.25;
+      sprayPos[i * 3 + 2] = -Math.random() * 2.2;
       sprayVels.push({
-        x: (Math.random() - 0.5) * 0.6,
-        y: Math.random() * 0.9 + 0.3,
-        z: -Math.random() * 1.4 - 0.4
+        x: (Math.random() - 0.5) * 0.7,
+        y: Math.random() * 1.2 + 0.4,
+        z: -Math.random() * 1.6 - 0.5
       });
     }
     sprayGeo.setAttribute('position', new THREE.BufferAttribute(sprayPos, 3));
     this.sprayVelocities = sprayVels;
 
     const sprayMat = new THREE.PointsMaterial({
-      color: 0xffffff,
-      size: 0.18,
+      map: dropTex,
+      size: 0.28,
       transparent: true,
-      opacity: 0.85
+      opacity: 0.9,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false
     });
     this.sprayParticles = new THREE.Points(sprayGeo, sprayMat);
     this.meshGroup.add(this.sprayParticles);
 
-    // 2. 수면 V자 웨이크(Wake) - 물결 파동
-    const wakeGeo = new THREE.PlaneGeometry(1.2, 2.2);
+    // 2. 수면 V자 물살 파동 웨이크 (Realistic Bow & Body Wake)
+    const wakeCanvas = document.createElement('canvas');
+    wakeCanvas.width = 128;
+    wakeCanvas.height = 256;
+    const wctx = wakeCanvas.getContext('2d');
+    wctx.fillStyle = 'rgba(255, 255, 255, 0)';
+    wctx.fillRect(0, 0, 128, 256);
+
+    // V자형 거품 라인
+    const wgrad = wctx.createLinearGradient(0, 0, 0, 256);
+    wgrad.addColorStop(0, 'rgba(255, 255, 255, 0.8)');
+    wgrad.addColorStop(0.3, 'rgba(224, 242, 254, 0.5)');
+    wgrad.addColorStop(1, 'rgba(255, 255, 255, 0.0)');
+    wctx.strokeStyle = wgrad;
+    wctx.lineWidth = 14;
+    wctx.beginPath();
+    wctx.moveTo(64, 20);
+    wctx.lineTo(12, 240);
+    wctx.stroke();
+    wctx.beginPath();
+    wctx.moveTo(64, 20);
+    wctx.lineTo(116, 240);
+    wctx.stroke();
+
+    const wakeTex = new THREE.CanvasTexture(wakeCanvas);
+    const wakeGeo = new THREE.PlaneGeometry(1.6, 2.8);
     const wakeMat = new THREE.MeshBasicMaterial({
-      color: 0xffffff,
+      map: wakeTex,
       transparent: true,
-      opacity: 0.35,
-      blending: THREE.AdditiveBlending
+      opacity: 0.45,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false
     });
     this.wakeMesh = new THREE.Mesh(wakeGeo, wakeMat);
     this.wakeMesh.rotation.x = -Math.PI / 2;
-    this.wakeMesh.position.set(0, 0.03, -0.6);
+    this.wakeMesh.position.set(0, 0.035, -0.7);
     this.meshGroup.add(this.wakeMesh);
   }
 
@@ -938,7 +979,7 @@ export class SwimmerModel {
     }
   }
 
-  // 물보라 파티클 업데이트
+  // 물보라 파티클 & 웨이크 애니메이션 업데이트
   updateSplash(delta) {
     if (!this.sprayParticles) return;
     const pos = this.sprayParticles.geometry.attributes.position.array;
@@ -950,15 +991,27 @@ export class SwimmerModel {
       pos[idx + 1] += vels[i].y * delta;
       pos[idx + 2] += vels[i].z * delta;
 
-      vels[i].y -= 9.8 * delta * 0.5; // 중력
+      vels[i].y -= 9.8 * delta * 0.45; // 자연스러운 물방울 포물선 중력
 
-      if (pos[idx + 1] < -0.2 || pos[idx + 2] < -2.2) {
-        pos[idx] = (Math.random() - 0.5) * 0.6;
-        pos[idx + 1] = 0.05;
-        pos[idx + 2] = -0.2;
-        vels[i].y = Math.random() * 0.9 + 0.3;
+      // 수면 아래로 떨어지거나 뒤로 멀어지면 재방출
+      if (pos[idx + 1] < -0.15 || pos[idx + 2] < -2.4) {
+        // 손이 입수하는 위치와 발차기 위치에서 교대로 파티클 방출
+        const isKick = (i % 2 === 0);
+        pos[idx] = (Math.random() - 0.5) * (isKick ? 0.4 : 0.7);
+        pos[idx + 1] = 0.04;
+        pos[idx + 2] = isKick ? -1.1 : 0.1;
+        vels[i].x = (Math.random() - 0.5) * 0.7;
+        vels[i].y = Math.random() * 1.1 + 0.35;
+        vels[i].z = -Math.random() * 1.5 - 0.6;
       }
     }
     this.sprayParticles.geometry.attributes.position.needsUpdate = true;
+
+    // 수면 V자 웨이크의 은은한 펄스 (유체 박동감)
+    if (this.wakeMesh) {
+      const wakePulse = 1.0 + Math.sin(this.swimTime * 6.0) * 0.08;
+      this.wakeMesh.scale.set(wakePulse, 1.0, wakePulse);
+      this.wakeMesh.material.opacity = 0.45 + Math.sin(this.swimTime * 4.0) * 0.1;
+    }
   }
 }

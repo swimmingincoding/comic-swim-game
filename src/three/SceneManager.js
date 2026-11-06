@@ -13,8 +13,8 @@ export class SceneManager {
     this.height = canvasContainer.clientHeight || window.innerHeight;
 
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0x0a1120); // 올림픽 아레나 나이트 분위기
-    this.scene.fog = new THREE.FogExp2(0x0a1120, 0.007);
+    this.scene.background = new THREE.Color(0x050c18); // 깊고 웅장한 올림픽 아레나 나이트
+    this.scene.fog = new THREE.FogExp2(0x050c18, 0.0045);
 
     // 렌더러 (ACES Filmic Tone Mapping & High Quality Shadows)
     this.renderer = new THREE.WebGLRenderer({

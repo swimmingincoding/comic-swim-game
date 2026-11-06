@@ -51,6 +51,8 @@ export class PoolEnvironment {
     this.createOlympicTouchPads();
     this.createRealisticWater();
     this.createArenaArchitecture();
+    this.createArenaRoofTruss();
+    this.createAudienceFlashes();
     this.createScoreboard();
     this.setupBroadcastLighting();
   }
@@ -164,20 +166,34 @@ export class PoolEnvironment {
     this.scene.add(poolGroup);
   }
 
-  // 바닥에 일렁이는 햇빛 카우스틱스 (Caustics Layer)
+  // 바닥 및 측면 벽면에 일렁이는 햇빛 카우스틱스 그물망 (Photorealistic Caustic Projection)
   createCausticsFloor() {
-    const geo = new THREE.PlaneGeometry(this.poolWidth, this.poolLength);
-    const mat = new THREE.MeshBasicMaterial({
+    const causticMat = new THREE.MeshBasicMaterial({
       map: this.causticsObj.texture,
       transparent: true,
-      opacity: 0.38,
+      opacity: 0.52,
       blending: THREE.AdditiveBlending,
       depthWrite: false
     });
-    const causticsMesh = new THREE.Mesh(geo, mat);
-    causticsMesh.rotation.x = -Math.PI / 2;
-    causticsMesh.position.set(0, -this.poolDepth + 0.015, this.poolLength / 2);
-    this.scene.add(causticsMesh);
+
+    // 1. 수영장 바닥
+    const floorGeo = new THREE.PlaneGeometry(this.poolWidth, this.poolLength);
+    const floorCaustics = new THREE.Mesh(floorGeo, causticMat);
+    floorCaustics.rotation.x = -Math.PI / 2;
+    floorCaustics.position.set(0, -this.poolDepth + 0.015, this.poolLength / 2);
+    this.scene.add(floorCaustics);
+
+    // 2. 좌우 측면 타일 벽면 카우스틱스 (물속 깊이감 극대화)
+    const wallGeo = new THREE.PlaneGeometry(this.poolLength, this.poolDepth);
+    const leftCaustics = new THREE.Mesh(wallGeo, causticMat);
+    leftCaustics.position.set(-this.poolWidth / 2 + 0.015, -this.poolDepth / 2, this.poolLength / 2);
+    leftCaustics.rotation.y = Math.PI / 2;
+    this.scene.add(leftCaustics);
+
+    const rightCaustics = new THREE.Mesh(wallGeo, causticMat);
+    rightCaustics.position.set(this.poolWidth / 2 - 0.015, -this.poolDepth / 2, this.poolLength / 2);
+    rightCaustics.rotation.y = -Math.PI / 2;
+    this.scene.add(rightCaustics);
   }
 
   // 올림픽 파도 감쇄 도넛 디스크형 부표 로프 (Wave-damping Lane Lines)
@@ -370,23 +386,27 @@ export class PoolEnvironment {
     });
   }
 
-  // 투명 수중 틴트와 굴절/반사를 담은 리얼 수면 (Realistic Water Surface)
+  // 투명 수중 틴트와 물리 굴절/반사를 담은 차세대 리얼 수면 (Realistic PBR Water Surface)
   createRealisticWater() {
     const waterGeo = new THREE.PlaneGeometry(this.poolWidth, this.poolLength, 80, 160);
 
-    // 투명 아쿠아 굴절 셰이더 (MeshPhysicalMaterial)
+    // 올림픽 규격 맑은 수영장 물 PBR 셰이더
     this.waterMaterial = new THREE.MeshPhysicalMaterial({
-      color: 0x0284c7,
-      emissive: 0x001e3d,
-      transmission: 0.72, // 투명도
-      opacity: 0.88,
+      color: 0x38bdf8,
+      emissive: 0x012b48,
+      transmission: 0.85, // 맑고 투명한 수중 광학
+      opacity: 0.94,
       transparent: true,
-      roughness: 0.08,
-      metalness: 0.08,
-      ior: 1.333,
-      reflectivity: 0.9,
+      roughness: 0.025,   // 매끄러운 수면 반사
+      metalness: 0.05,
+      clearcoat: 1.0,     // 수면 코팅 반사광 극대화
+      clearcoatRoughness: 0.02,
+      ior: 1.333,         // 실제 물의 굴절률 (Refractive Index of Water)
+      reflectivity: 0.98,
+      attenuationColor: new THREE.Color(0x0284c7), // 수심에 따른 코발트 블루 광학 감쇠
+      attenuationDistance: 2.8,
       normalMap: this.waterNormalTex,
-      normalScale: new THREE.Vector2(0.3, 0.3)
+      normalScale: new THREE.Vector2(0.45, 0.45)
     });
 
     this.waterMesh = new THREE.Mesh(waterGeo, this.waterMaterial);
@@ -539,62 +559,169 @@ export class PoolEnvironment {
     this.scoreboardTexture.needsUpdate = true;
   }
 
-  // 올림픽 방송 스튜디오 조명 (Broadcast Floodlighting)
+  // 4대 올림픽 메가 투광등 & 수중 발광 & 인체 림라이트 (Broadcast Arena Lighting & Rim Light)
   setupBroadcastLighting() {
-    const ambientLight = new THREE.AmbientLight(0xdbeafe, 0.95);
+    // 1. 경기장 기본 환경광
+    const ambientLight = new THREE.AmbientLight(0xdbeafe, 0.75);
     this.scene.add(ambientLight);
 
-    // 메인 천장 아레나 투광등
-    const sunLight = new THREE.DirectionalLight(0xffffff, 1.4);
-    sunLight.position.set(16, 28, 25);
-    sunLight.castShadow = true;
-    sunLight.shadow.mapSize.width = 2048;
-    sunLight.shadow.mapSize.height = 2048;
-    sunLight.shadow.camera.near = 0.5;
-    sunLight.shadow.camera.far = 90;
-    sunLight.shadow.camera.left = -26;
-    sunLight.shadow.camera.right = 26;
-    sunLight.shadow.camera.top = 36;
-    sunLight.shadow.camera.bottom = -36;
-    sunLight.shadow.bias = -0.0005;
-    this.scene.add(sunLight);
+    // 2. 메인 천장 아레나 주 투광등 (소프트 섀도우)
+    const mainSun = new THREE.DirectionalLight(0xffffff, 1.6);
+    mainSun.position.set(16, 26, 25);
+    mainSun.castShadow = true;
+    mainSun.shadow.mapSize.width = 2048;
+    mainSun.shadow.mapSize.height = 2048;
+    mainSun.shadow.camera.near = 0.5;
+    mainSun.shadow.camera.far = 90;
+    mainSun.shadow.camera.left = -26;
+    mainSun.shadow.camera.right = 26;
+    mainSun.shadow.camera.top = 36;
+    mainSun.shadow.camera.bottom = -36;
+    mainSun.shadow.bias = -0.0004;
+    this.scene.add(mainSun);
 
-    // 보조 채움광
-    const fillLight = new THREE.DirectionalLight(0x7dd3fc, 0.7);
-    fillLight.position.set(-20, 22, 25);
-    this.scene.add(fillLight);
+    // 3. 선수 인체 윤곽선 림라이트 (Rim Light - 인체와 물결의 가장자리를 빛나게 분리)
+    const rimLight = new THREE.DirectionalLight(0xbae6fd, 1.2);
+    rimLight.position.set(-18, 18, 55);
+    this.scene.add(rimLight);
 
-    // 수중 전용 블루 틴트 램프
-    for (let z of [8, 20, 32, 44]) {
-      const uLight = new THREE.PointLight(0x0284c7, 1.6, 16);
-      uLight.position.set(0, -1.2, z);
+    // 4. 경기장 4대 코너 올림픽 메가 스포트라이트 (4 Mega Corner Stadium Towers)
+    const corners = [
+      { x: -16, y: 19, z: 2 },
+      { x: 16, y: 19, z: 2 },
+      { x: -16, y: 19, z: 48 },
+      { x: 16, y: 19, z: 48 }
+    ];
+    const targetObj = new THREE.Object3D();
+    targetObj.position.set(0, 0, 25);
+    this.scene.add(targetObj);
+
+    corners.forEach(pos => {
+      const spot = new THREE.SpotLight(0xfffbeb, 1.4, 75, Math.PI / 4.5, 0.45, 1.2);
+      spot.position.set(pos.x, pos.y, pos.z);
+      spot.target = targetObj;
+      this.scene.add(spot);
+    });
+
+    // 5. 수중 아쿠아 LED 램프 (Underwater Blue Illuminators)
+    for (let z of [6, 16, 26, 36, 46]) {
+      const uLight = new THREE.PointLight(0x0284c7, 1.8, 14);
+      uLight.position.set(0, -1.3, z);
       this.scene.add(uLight);
     }
   }
 
-  // 매 프레임 물결 및 카우스틱스 애니메이션
+  // 경기장 상공 웅장한 아치 트러스 돔 구조물 (카메라 시야 방해 0%)
+  createArenaRoofTruss() {
+    const trussGroup = new THREE.Group();
+    const trussMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.7, roughness: 0.3 });
+    const ledMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
+
+    // Y=24m 상공을 가로지르는 3개의 대형 돔 아치 빔
+    for (let z of [10, 25, 40]) {
+      const archCurve = new THREE.QuadraticBezierCurve3(
+        new THREE.Vector3(-this.poolWidth / 2 - 16, 6, z),
+        new THREE.Vector3(0, 25, z),
+        new THREE.Vector3(this.poolWidth / 2 + 16, 6, z)
+      );
+      const archGeo = new THREE.TubeGeometry(archCurve, 32, 0.45, 8, false);
+      const archMesh = new THREE.Mesh(archGeo, trussMat);
+      trussGroup.add(archMesh);
+
+      // 아치 하단 네온 LED 라인
+      const ledGeo = new THREE.TubeGeometry(archCurve, 32, 0.12, 6, false);
+      const ledMesh = new THREE.Mesh(ledGeo, ledMat);
+      ledMesh.position.y -= 0.3;
+      trussGroup.add(ledMesh);
+    }
+
+    this.scene.add(trussGroup);
+  }
+
+  // 관중석 스마트폰 플래시 / 응원봉 반짝임 연출 (Audience Flash Sparkles)
+  createAudienceFlashes() {
+    const flashCount = 120;
+    const flashGeo = new THREE.BufferGeometry();
+    const positions = new Float32Array(flashCount * 3);
+    const opacities = new Float32Array(flashCount);
+
+    let idx = 0;
+    for (let i = 0; i < flashCount; i++) {
+      const side = Math.random() > 0.5 ? 1 : -1;
+      const x = side * (this.poolWidth / 2 + 10 + Math.random() * 11);
+      const tier = Math.random() * 8;
+      const y = tier * 0.9 + 1.2 + Math.random() * 0.5;
+      const z = Math.random() * this.poolLength;
+
+      positions[idx] = x;
+      positions[idx + 1] = y;
+      positions[idx + 2] = z;
+      opacities[i] = 0.0;
+      idx += 3;
+    }
+
+    flashGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    this.flashOpacities = opacities;
+
+    // 플래시 캔버스 텍스처 (중심이 밝고 부드럽게 번지는 스타버스트 광원)
+    const canvas = document.createElement('canvas');
+    canvas.width = 64;
+    canvas.height = 64;
+    const ctx = canvas.getContext('2d');
+    const grad = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+    grad.addColorStop(0, 'rgba(255, 255, 255, 1.0)');
+    grad.addColorStop(0.3, 'rgba(224, 242, 254, 0.8)');
+    grad.addColorStop(1, 'rgba(255, 255, 255, 0.0)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 64, 64);
+    const starTex = new THREE.CanvasTexture(canvas);
+
+    this.flashMaterial = new THREE.PointsMaterial({
+      size: 1.2,
+      map: starTex,
+      transparent: true,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      opacity: 0.9
+    });
+
+    this.flashPoints = new THREE.Points(flashGeo, this.flashMaterial);
+    this.scene.add(this.flashPoints);
+  }
+
+  // 매 프레임 물결, 카우스틱스, 관중 플래시 애니메이션
   update(time) {
-    // 1. 카우스틱스 바닥 일렁임
+    // 1. 카우스틱스 바닥 일렁임 (SIGGRAPH 간섭 파동)
     if (this.causticsObj) {
       this.causticsObj.update(time);
     }
 
-    // 2. 수면 2중 노멀맵 스크롤링
+    // 2. 수면 2중 비대칭 노멀맵 스크롤링
     if (this.waterNormalTex) {
-      this.waterNormalTex.offset.x = (time * 0.04) % 1;
-      this.waterNormalTex.offset.y = (time * 0.06) % 1;
+      this.waterNormalTex.offset.x = (time * 0.045) % 1;
+      this.waterNormalTex.offset.y = (time * 0.075) % 1;
     }
 
-    // 3. 미세한 수면 지오메트리 파동
+    // 3. 복합 사인파 + 게르스트너 수면 지오메트리 입체 파동
     if (this.waterMesh) {
       const pos = this.waterMesh.geometry.attributes.position.array;
       const orig = this.origPositions;
       for (let i = 0; i < pos.length; i += 3) {
         const u = orig[i];
         const v = orig[i + 1];
-        pos[i + 2] = Math.sin(u * 1.8 + time * 3.5) * 0.025 + Math.cos(v * 1.4 + time * 2.8) * 0.02;
+        pos[i + 2] = Math.sin(u * 1.6 + time * 3.8 + Math.cos(v * 1.2)) * 0.032 + Math.cos(v * 2.2 - time * 3.0) * 0.022;
       }
       this.waterMesh.geometry.attributes.position.needsUpdate = true;
+    }
+
+    // 4. 관중석 카메라 플래시 무작위 번쩍임
+    if (this.flashPoints) {
+      // 프레임마다 약 10% 확률로 1~3개의 스마트폰 플래시 폭발
+      const isBurst = Math.random() < 0.28;
+      this.flashPoints.visible = isBurst;
+      if (isBurst) {
+        this.flashMaterial.size = 1.0 + Math.random() * 1.6;
+      }
     }
   }
 }
