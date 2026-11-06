@@ -78,7 +78,9 @@ export class GameManager {
     this.introLaneIndex = 0;
     this.introTimer = 0;
     this.lastIncidentTime = -999;
+    this.nextCrowdReactionTime = 999;
     this.sprintClimaxTriggered = false;
+    soundManager.stopRaceAmbience();
 
     // 레이스 계획 생성 (1등 선정 및 겹치지 않는 돌발 상황 Z 배정)
     this.racePlan = generateRacePlan(SWIMMERS_DATA);
@@ -253,8 +255,13 @@ export class GameManager {
   beginRaceStart() {
     this.state = 'RACING';
     this.raceTime = 0;
+    this.nextCrowdReactionTime = 3.6 + Math.random() * 2.0;
     this.uiManager.showAnnouncement("GO! GO! GO!");
     soundManager.playStartBeep();
+
+    // 레이스 지속 앰비언트 (물살 + 관중 웅성거림) 및 출발 환호
+    soundManager.startRaceAmbience();
+    soundManager.playCrowdCheer(2.5, 0.45);
 
     // AI 스포츠 캐스터 출발 중계
     voiceCaster.unlock();
@@ -339,6 +346,7 @@ export class GameManager {
           swimmer.triggerIncident(plan.incident);
 
           soundManager.playIncidentSfx(plan.incident.id);
+          soundManager.playCrowdGasp(); // 돌발 상황 시 관객 집단 탄식 ("어어어?! 앗!")
           if ('vibrate' in navigator) {
             try { navigator.vibrate([60, 40, 60]); } catch (e) {}
           }
@@ -374,6 +382,11 @@ export class GameManager {
           const isFirst = (rank === 1);
           this.sceneManager.pool.triggerTouchPad(swimmer.lane, isFirst);
           soundManager.playTouchPad();
+
+          if (isFirst) {
+            soundManager.playCrowdCheer(3.2, 0.52);
+            soundManager.playCrowdClaps(3.0, 0.48);
+          }
 
           if (isFirst && 'vibrate' in navigator) {
             try { navigator.vibrate([180, 80, 240]); } catch (e) {}
@@ -416,6 +429,12 @@ export class GameManager {
       });
       const leader = currentRanks[0];
 
+      // 레이스 중간 중간 터져 나오는 관중들의 환호성과 박수 (3.8초~6.2초 간격)
+      if (this.raceTime >= this.nextCrowdReactionTime && (!leader || leader.progressZ < 38.0)) {
+        soundManager.playMidRaceCheer();
+        this.nextCrowdReactionTime = this.raceTime + 3.8 + Math.random() * 2.4;
+      }
+
       // 결승 10m 구간(40m 돌파) 관중 함성 고조 및 심장 박동 긴장감 비트
       if (!this.sprintClimaxTriggered && leader && leader.progressZ >= 40.0) {
         this.sprintClimaxTriggered = true;
@@ -446,6 +465,7 @@ export class GameManager {
   // 레이스 종료 및 최종 1~8위 확정
   finishRace() {
     this.state = 'FINISHED';
+    soundManager.stopRaceAmbience();
 
     if (this.wakeLock) {
       try { this.wakeLock.release(); } catch (e) {}

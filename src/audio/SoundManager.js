@@ -430,30 +430,143 @@ class SoundManager {
     osc.stop(now + 0.06);
   }
 
-  // 선수 등장 및 포즈 시 관중 환호 및 박수 갈채
-  playApplause() {
+  // 지속적인 레이스 수영장 앰비언트 (물살 + 아레나 관중 베이스 사운드)
+  startRaceAmbience() {
+    if (this.isMuted) return;
+    this.init();
+    if (this.raceAmbientNode) return; // 이미 재생 중
+
+    try {
+      const now = this.ctx.currentTime;
+      // 5초 길이의 핑크 노이즈 버퍼 루프 생성
+      const bufferSize = this.ctx.sampleRate * 5.0;
+      const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
+      for (let i = 0; i < bufferSize; i++) {
+        const white = Math.random() * 2 - 1;
+        b0 = 0.99886 * b0 + white * 0.0555179;
+        b1 = 0.99332 * b1 + white * 0.0750759;
+        b2 = 0.96900 * b2 + white * 0.1538520;
+        b3 = 0.86650 * b3 + white * 0.3104856;
+        b4 = 0.55000 * b4 + white * 0.5329522;
+        b5 = -0.7616 * b5 - white * 0.0168980;
+        data[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362) * 0.08;
+        b6 = white * 0.115926;
+      }
+
+      this.raceAmbientNode = this.ctx.createBufferSource();
+      this.raceAmbientNode.buffer = buffer;
+      this.raceAmbientNode.loop = true;
+
+      // 물살 및 아레나 웅성거림 대역 통과 필터 (800Hz)
+      const filter = this.ctx.createBiquadFilter();
+      filter.type = "bandpass";
+      filter.frequency.setValueAtTime(850, now);
+      filter.Q.setValueAtTime(0.8, now);
+
+      this.raceAmbientGain = this.ctx.createGain();
+      this.raceAmbientGain.gain.setValueAtTime(0.01, now);
+      this.raceAmbientGain.gain.linearRampToValueAtTime(0.18, now + 1.2);
+
+      this.raceAmbientNode.connect(filter);
+      filter.connect(this.raceAmbientGain);
+      this.raceAmbientGain.connect(this.ctx.destination);
+
+      this.raceAmbientNode.start(now);
+    } catch (e) {}
+  }
+
+  stopRaceAmbience() {
+    if (!this.raceAmbientNode) return;
+    try {
+      const now = this.ctx.currentTime;
+      if (this.raceAmbientGain) {
+        this.raceAmbientGain.gain.linearRampToValueAtTime(0.001, now + 1.2);
+      }
+      setTimeout(() => {
+        if (this.raceAmbientNode) {
+          try { this.raceAmbientNode.stop(); } catch (e) {}
+          this.raceAmbientNode.disconnect();
+          this.raceAmbientNode = null;
+        }
+      }, 1300);
+    } catch (e) {}
+  }
+
+  // 리얼 관중 집단 박수 소리 (Realistic Handclaps Burst)
+  playCrowdClaps(duration = 1.8, intensity = 0.35) {
     if (this.isMuted) return;
     this.init();
     const now = this.ctx.currentTime;
+
     try {
-      const bufferSize = Math.floor(this.ctx.sampleRate * 1.0);
+      // 촘촘한 개별 박수 펄스 25회 무작위 타격
+      const clapCount = Math.floor(duration * 16);
+      for (let i = 0; i < clapCount; i++) {
+        const t = now + (i / clapCount) * duration + (Math.random() - 0.5) * 0.06;
+        if (t < now) continue;
+
+        const clapLen = Math.floor(this.ctx.sampleRate * 0.045);
+        const buffer = this.ctx.createBuffer(1, clapLen, this.ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let j = 0; j < clapLen; j++) {
+          data[j] = (Math.random() * 2 - 1) * Math.exp(-j / (this.ctx.sampleRate * 0.008));
+        }
+
+        const source = this.ctx.createBufferSource();
+        source.buffer = buffer;
+
+        const filter = this.ctx.createBiquadFilter();
+        filter.type = "bandpass";
+        filter.frequency.setValueAtTime(1400 + Math.random() * 400, t);
+        filter.Q.setValueAtTime(1.8, t);
+
+        const gain = this.ctx.createGain();
+        const clapVol = (Math.random() * 0.15 + 0.18) * intensity;
+        gain.gain.setValueAtTime(clapVol, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.045);
+
+        source.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        source.start(t);
+      }
+    } catch (e) {}
+  }
+
+  // 리얼 관중 환호성 (Crowd Cheer Roar "와아아아아!")
+  playCrowdCheer(duration = 2.4, intensity = 0.4) {
+    if (this.isMuted) return;
+    this.init();
+    const now = this.ctx.currentTime;
+
+    try {
+      const bufferSize = Math.floor(this.ctx.sampleRate * duration);
       const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
       const data = buffer.getChannelData(0);
       for (let i = 0; i < bufferSize; i++) {
-        data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (this.ctx.sampleRate * 0.6));
+        const envelope = Math.sin((i / bufferSize) * Math.PI);
+        data[i] = (Math.random() * 2 - 1) * envelope;
       }
+
       const noise = this.ctx.createBufferSource();
       noise.buffer = buffer;
 
+      // 공명 필터로 "와아아아" 환호성 모달 합성
       const filter = this.ctx.createBiquadFilter();
       filter.type = "bandpass";
-      filter.frequency.setValueAtTime(1200, now);
-      filter.Q.setValueAtTime(1.2, now);
+      filter.frequency.setValueAtTime(950, now);
+      filter.frequency.linearRampToValueAtTime(1250, now + duration * 0.4);
+      filter.frequency.linearRampToValueAtTime(800, now + duration);
+      filter.Q.setValueAtTime(2.2, now);
 
       const gain = this.ctx.createGain();
       gain.gain.setValueAtTime(0.01, now);
-      gain.gain.linearRampToValueAtTime(0.3, now + 0.1);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.95);
+      gain.gain.linearRampToValueAtTime(intensity, now + 0.35);
+      gain.gain.setValueAtTime(intensity, now + duration * 0.65);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
 
       noise.connect(filter);
       filter.connect(gain);
@@ -463,38 +576,74 @@ class SoundManager {
     } catch (e) {}
   }
 
+  // 돌발 상황 시 관객 집단 탄식 ("어어어?! 앗!")
+  playCrowdGasp() {
+    if (this.isMuted) return;
+    this.init();
+    const now = this.ctx.currentTime;
+
+    try {
+      const duration = 1.1;
+      const bufferSize = Math.floor(this.ctx.sampleRate * duration);
+      const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (this.ctx.sampleRate * 0.4));
+      }
+
+      const noise = this.ctx.createBufferSource();
+      noise.buffer = buffer;
+
+      // 주파수가 아래로 꺾이는 탄식 필터
+      const filter = this.ctx.createBiquadFilter();
+      filter.type = "bandpass";
+      filter.frequency.setValueAtTime(1100, now);
+      filter.frequency.exponentialRampToValueAtTime(450, now + 0.8);
+      filter.Q.setValueAtTime(2.0, now);
+
+      const gain = this.ctx.createGain();
+      gain.gain.setValueAtTime(0.02, now);
+      gain.gain.linearRampToValueAtTime(0.32, now + 0.12);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+      noise.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.ctx.destination);
+
+      noise.start(now);
+    } catch (e) {}
+  }
+
+  // 레이스 중간 중간 터져 나오는 관중 환호 & 박수 콤보
+  playMidRaceCheer() {
+    // 박수와 환호를 조합하여 풍성한 아레나 연출
+    const rand = Math.random();
+    if (rand < 0.4) {
+      this.playCrowdClaps(1.8, 0.32);
+    } else if (rand < 0.75) {
+      this.playCrowdCheer(2.2, 0.35);
+      setTimeout(() => this.playCrowdClaps(1.4, 0.25), 400);
+    } else {
+      this.playCrowdCheer(2.8, 0.42);
+      this.playCrowdClaps(2.2, 0.38);
+    }
+  }
+
+  // 선수 등장 및 포즈 시 관중 환호 및 박수 갈채
+  playApplause() {
+    this.playCrowdCheer(1.6, 0.3);
+    this.playCrowdClaps(1.5, 0.35);
+  }
+
   // 결승 10m 구간 관중 함성 고조 및 심장 박동 비트
   playSprintClimax() {
     if (this.isMuted) return;
     this.init();
     const now = this.ctx.currentTime;
 
-    // 1. 관중 함성 크레센도 (서서히 커지는 박수와 환호)
-    try {
-      const bufferSize = Math.floor(this.ctx.sampleRate * 4.0);
-      const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
-      const data = buffer.getChannelData(0);
-      for (let i = 0; i < bufferSize; i++) {
-        data[i] = (Math.random() * 2 - 1) * Math.min(1.0, i / (this.ctx.sampleRate * 1.5));
-      }
-      const noise = this.ctx.createBufferSource();
-      noise.buffer = buffer;
-
-      const filter = this.ctx.createBiquadFilter();
-      filter.type = "bandpass";
-      filter.frequency.setValueAtTime(1100, now);
-      filter.Q.setValueAtTime(1.4, now);
-
-      const gain = this.ctx.createGain();
-      gain.gain.setValueAtTime(0.02, now);
-      gain.gain.linearRampToValueAtTime(0.35, now + 2.5);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 4.0);
-
-      noise.connect(filter);
-      filter.connect(gain);
-      gain.connect(this.ctx.destination);
-      noise.start(now);
-    } catch (e) {}
+    // 1. 관중 함성 & 기립 박수 대폭발
+    this.playCrowdCheer(4.0, 0.55);
+    this.playCrowdClaps(3.8, 0.5);
 
     // 2. 긴장감 넘치는 심장박동 (두근... 두근... 두근...) 4회 펄스
     for (let i = 0; i < 4; i++) {
