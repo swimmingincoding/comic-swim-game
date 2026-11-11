@@ -64,9 +64,9 @@ function init() {
         gameManager.playerCoins += 5000;
         uiManager.updateWallet(gameManager.playerCoins);
         soundManager.playFanfare();
-        alert("🪙 5,000 코인이 무료 충전되었습니다!");
+        uiManager.showToast("🪙 5,000 코인이 무료 충전되었습니다!");
       } else {
-        alert("아직 코인이 충분합니다! (500 코인 이하일 때 충전 가능)");
+        uiManager.showToast("🪙 아직 코인이 충분합니다! (500 코인 이하일 때 충전 가능)");
       }
     }
   });
@@ -77,8 +77,29 @@ function init() {
   // 렌더 및 물리 루프 (requestAnimationFrame)
   let lastTime = performance.now();
 
+  // 모바일 화면 전환 / 백그라운드 진입 시 오디오 일시정지 및 배터리 절약 처리
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      soundManager.suspend();
+      voiceCaster.cancel();
+    } else {
+      lastTime = performance.now();
+      soundManager.resume();
+      if (gameManager.state === 'RACING' && 'wakeLock' in navigator) {
+        navigator.wakeLock.request('screen').then(lock => {
+          gameManager.wakeLock = lock;
+        }).catch(() => {});
+      }
+    }
+  });
+
   function animate(now) {
     requestAnimationFrame(animate);
+
+    if (document.hidden) {
+      lastTime = now;
+      return;
+    }
 
     const delta = Math.min((now - lastTime) / 1000, 0.1);
     lastTime = now;

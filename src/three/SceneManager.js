@@ -11,6 +11,7 @@ export class SceneManager {
     this.container = canvasContainer;
     this.width = canvasContainer.clientWidth || window.innerWidth;
     this.height = canvasContainer.clientHeight || window.innerHeight;
+    this.isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (window.innerWidth <= 950);
 
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(0x050c18); // 깊고 웅장한 올림픽 아레나 나이트
@@ -22,7 +23,7 @@ export class SceneManager {
       powerPreference: 'high-performance'
     });
     this.renderer.setSize(this.width, this.height);
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, this.isMobile ? 1.5 : 2));
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -31,13 +32,15 @@ export class SceneManager {
 
     // 카메라
     this.camera = new THREE.PerspectiveCamera(48, this.width / this.height, 0.1, 300);
+    this._targetPos = new THREE.Vector3();
+    this._lookAtPos = new THREE.Vector3();
 
     // 카메라 모드: 'BROADCAST', 'MY_BET', 'OVERVIEW', 'FINISH_LINE'
     this.cameraMode = 'BROADCAST';
     this.betLane = 4; // 기본 추적 레인 (4번)
 
     // 수영장 환경
-    this.pool = new PoolEnvironment(this.scene);
+    this.pool = new PoolEnvironment(this.scene, this.isMobile);
 
     // 8명의 수영선수 생성 (레인 1~8)
     this.swimmers = [];
@@ -100,8 +103,8 @@ export class SceneManager {
 
   updateCamera(delta, leaderSwimmer) {
     const leaderZ = leaderSwimmer ? leaderSwimmer.progressZ : 5;
-    const targetPos = new THREE.Vector3();
-    const lookAtPos = new THREE.Vector3();
+    const targetPos = this._targetPos;
+    const lookAtPos = this._lookAtPos;
 
     switch (this.cameraMode) {
       case 'INTRO': {

@@ -153,7 +153,8 @@ export class GameManager {
   startRace() {
     if (this.state !== 'BETTING') return;
     if (this.betAmount > this.playerCoins) {
-      alert("보유 코인이 부족합니다!");
+      this.uiManager.setElementVisible(this.uiManager.bettingScreen, true, 'flex');
+      this.uiManager.showToast("⚠️ 보유 코인이 부족합니다! 상단 지갑의 [+] 버튼으로 무료 충전하세요.");
       return;
     }
 

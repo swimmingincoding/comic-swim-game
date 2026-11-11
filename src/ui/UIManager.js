@@ -42,6 +42,9 @@ export class UIManager {
     this.dockBettorInput = document.getElementById('dock-bettor-input');
 
     this.currentSelectedLane = 4;
+    this.minimapDots = {};
+    this.lastLeaderboardUpdate = 0;
+    this.lastFinishCount = -1;
   }
 
   setCallbacks(callbacks) {
@@ -133,16 +136,27 @@ export class UIManager {
       });
     }
 
-    // 모바일 전체화면 (Fullscreen) 토글 버튼
+    // 모바일 전체화면 (Fullscreen) 토글 버튼 (iOS Safari 등 미지원 기기 폴백 안내 포함)
     const fsBtn = document.getElementById('btn-fullscreen');
     if (fsBtn) {
       fsBtn.addEventListener('click', () => {
-        if (!document.fullscreenElement) {
-          document.documentElement.requestFullscreen().catch(() => {});
-          fsBtn.textContent = '🗗';
-        } else {
-          document.exitFullscreen().catch(() => {});
-          fsBtn.textContent = '⛶';
+        const docEl = document.documentElement;
+        const reqFs = docEl.requestFullscreen || docEl.webkitRequestFullscreen;
+        const exitFs = document.exitFullscreen || document.webkitExitFullscreen;
+        const isFs = document.fullscreenElement || document.webkitFullscreenElement;
+
+        if (!reqFs) {
+          this.showToast('📱 iOS에서는 브라우저 [공유] ➔ [홈 화면에 추가]로 전체화면을 즐길 수 있습니다!');
+        } else if (!isFs) {
+          Promise.resolve(reqFs.call(docEl)).then(() => {
+            fsBtn.textContent = '🗗';
+          }).catch(() => {
+            this.showToast('📱 현재 브라우저 환경에서는 전체화면 전환이 제한됩니다.');
+          });
+        } else if (exitFs) {
+          Promise.resolve(exitFs.call(document)).then(() => {
+            fsBtn.textContent = '⛶';
+          }).catch(() => {});
         }
         soundManager.playClick();
       });
@@ -615,22 +629,27 @@ export class UIManager {
     this.setElementVisible(this.introScreen, false);
     this.setElementVisible(this.raceHud, true, 'block');
     this.setElementVisible(this.resultModal, false);
+    this.lastLeaderboardUpdate = 0;
+    this.lastFinishCount = -1;
     this.buildMinimapLanes();
   }
 
   buildMinimapLanes() {
     if (!this.minimapTracksContainer) return;
     this.minimapTracksContainer.innerHTML = '';
+    this.minimapDots = {};
     for (let lane = 1; lane <= 8; lane++) {
       const track = document.createElement('div');
       track.className = 'minimap-track';
+      const isMyBet = (lane === this.currentSelectedLane);
       track.innerHTML = `
         <span class="m-lane-num">${lane}</span>
         <div class="m-lane-line">
-          <div class="m-dot dot-lane-${lane}" id="minimap-dot-${lane}"></div>
+          <div class="m-dot dot-lane-${lane} ${isMyBet ? 'my-bet-dot' : ''}" id="minimap-dot-${lane}"></div>
         </div>
       `;
       this.minimapTracksContainer.appendChild(track);
+      this.minimapDots[lane] = track.querySelector('.m-dot');
     }
   }
 
@@ -691,25 +710,30 @@ export class UIManager {
     }, 3800);
   }
 
-  // 실시간 레이스 HUD (타이머, 순위표, 미니맵) 갱신
+  // 실시간 레이스 HUD (타이머, 순위표, 미니맵) 갱신 - 미니맵 캐싱 & 리더보드 10Hz 쓰로틀링 최적화
   updateRaceHUD({ timeStr, ranks, leader, selectedLane, finishOrder = [] }) {
-    if (this.liveTimerDisplay) {
+    if (this.liveTimerDisplay && this.liveTimerDisplay.textContent !== timeStr) {
       this.liveTimerDisplay.textContent = timeStr;
     }
 
-    // 미니맵 점 위치 업데이트 (우측 0m -> 좌측 50m)
-    ranks.forEach(s => {
-      const dot = document.getElementById(`minimap-dot-${s.lane}`);
+    // 미니맵 점 위치 업데이트 (DOM 조회 없이 캐싱된 참조 사용)
+    for (let i = 0; i < ranks.length; i++) {
+      const s = ranks[i];
+      const dot = this.minimapDots[s.lane];
       if (dot) {
         const percent = Math.min(100, Math.max(0, (s.progressZ / 50.0) * 100));
-        dot.style.right = `${percent}%`;
-        if (s.lane === selectedLane) {
-          dot.classList.add('my-bet-dot');
-        }
+        dot.style.right = `${percent.toFixed(1)}%`;
       }
-    });
+    }
 
-    // 좌측 실시간 리더보드 (가독성 극대화 & 골인 순위 100% 확정 고정)
+    // 좌측 실시간 리더보드: 매 프레임(60fps) DOM 재생성을 방지하기 위해 100ms(10Hz) 주기 또는 골인 발생 시에만 갱신
+    const now = performance.now();
+    if (now - this.lastLeaderboardUpdate < 100 && finishOrder.length === this.lastFinishCount) {
+      return;
+    }
+    this.lastLeaderboardUpdate = now;
+    this.lastFinishCount = finishOrder.length;
+
     if (this.leaderboardContainer) {
       this.leaderboardContainer.innerHTML = ranks.map((s, idx) => {
         const isBet = (s.lane === selectedLane);

@@ -13,8 +13,9 @@ import { TextureGenerator } from './TextureGenerator.js';
  */
 
 export class PoolEnvironment {
-  constructor(scene) {
+  constructor(scene, isMobile = false) {
     this.scene = scene;
+    this.isMobile = isMobile;
     this.poolLength = 50.0;
     this.laneWidth = 2.5;
     this.laneCount = 10;
@@ -196,58 +197,68 @@ export class PoolEnvironment {
     this.scene.add(rightCaustics);
   }
 
-  // 올림픽 파도 감쇄 도넛 디스크형 부표 로프 (Wave-damping Lane Lines)
+  // 올림픽 파도 감쇄 도넛 디스크형 부표 로프 (Wave-damping Lane Lines - InstancedMesh 최적화: 1,100 Draw Calls -> 2 Draw Calls)
   createWaveDampingLaneLines() {
     const laneGroup = new THREE.Group();
+    const ropeCount = this.laneCount + 1; // 11개 로프 (0~10)
+    const discCount = 100;
+    const totalDiscs = ropeCount * discCount; // 1,100개
+    const step = this.poolLength / discCount;
+
+    // 1. 중심 와이어 케이블 (InstancedMesh로 11개 일괄 렌더링)
+    const cableGeo = new THREE.CylinderGeometry(0.012, 0.012, this.poolLength, 8);
+    cableGeo.rotateX(Math.PI / 2);
+    const cableMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.8, roughness: 0.2 });
+    const cableInstanced = new THREE.InstancedMesh(cableGeo, cableMat, ropeCount);
+
+    // 2. 도넛 디스크 부표 (InstancedMesh + setColorAt으로 1,100개 단일 드로우콜 렌더링)
+    const discGeo = new THREE.TorusGeometry(0.065, 0.024, 6, 12);
+    const discMat = new THREE.MeshStandardMaterial({
+      color: 0xffffff,
+      roughness: 0.25,
+      metalness: 0.15
+    });
+    const discInstanced = new THREE.InstancedMesh(discGeo, discMat, totalDiscs);
+
+    const dummy = new THREE.Object3D();
+    const colorObj = new THREE.Color();
+    const redColor = new THREE.Color(0xef4444);
+    let discIdx = 0;
 
     for (let i = 0; i <= this.laneCount; i++) {
       const x = -this.poolWidth / 2 + i * this.laneWidth;
 
+      // 케이블 위치 행렬 설정
+      dummy.position.set(x, 0.035, this.poolLength / 2);
+      dummy.updateMatrix();
+      cableInstanced.setMatrixAt(i, dummy.matrix);
+
       // 올림픽 레인 컬러 규격:
-      // 0, 10번 외곽: 녹색
-      // 1, 9번: 주황/노랑
-      // 2, 3, 7, 8번: 청색
-      // 4, 5, 6번 중앙: 노랑
-      let baseColor = 0x2563eb;
-      if (i === 0 || i === this.laneCount) baseColor = 0x10b981;
-      else if (i === 1 || i === 9) baseColor = 0xf59e0b;
-      else if (i === 4 || i === 5 || i === 6) baseColor = 0xfacc15;
-
-      const ropeMat = new THREE.MeshStandardMaterial({
-        color: baseColor,
-        roughness: 0.25,
-        metalness: 0.15
-      });
-      const redMat = new THREE.MeshStandardMaterial({
-        color: 0xef4444,
-        roughness: 0.25
-      });
-
-      // 중심 와이어 케이블
-      const cable = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.012, 0.012, this.poolLength, 8),
-        new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.8, roughness: 0.2 })
-      );
-      cable.rotation.x = Math.PI / 2;
-      cable.position.set(x, 0.035, this.poolLength / 2);
-      laneGroup.add(cable);
-
-      // 도넛 디스크 부표 인스턴스 (실제 올림픽 수영장의 파도 흡수 톱니 디스크 링)
-      const discCount = 100;
-      const step = this.poolLength / discCount;
+      // 0, 10번 외곽: 녹색 / 1, 9번: 주황 / 2, 3, 7, 8번: 청색 / 4, 5, 6번 중앙: 노랑
+      let baseHex = 0x2563eb;
+      if (i === 0 || i === this.laneCount) baseHex = 0x10b981;
+      else if (i === 1 || i === 9) baseHex = 0xf59e0b;
+      else if (i === 4 || i === 5 || i === 6) baseHex = 0xfacc15;
+      colorObj.setHex(baseHex);
 
       for (let d = 0; d < discCount; d++) {
         const z = d * step + step / 2;
-        // 5m, 15m, 25m 지점은 빨간색 부표
         const isRed = (z <= 5.0) || (z >= this.poolLength - 5.0) || (z >= 14.5 && z <= 15.5) || (z >= 24.5 && z <= 25.5);
 
-        const discGeo = new THREE.TorusGeometry(0.065, 0.024, 6, 12);
-        const disc = new THREE.Mesh(discGeo, isRed ? redMat : ropeMat);
-        disc.position.set(x, 0.035, z);
-        laneGroup.add(disc);
+        dummy.position.set(x, 0.035, z);
+        dummy.updateMatrix();
+        discInstanced.setMatrixAt(discIdx, dummy.matrix);
+        discInstanced.setColorAt(discIdx, isRed ? redColor : colorObj);
+        discIdx++;
       }
     }
 
+    cableInstanced.instanceMatrix.needsUpdate = true;
+    discInstanced.instanceMatrix.needsUpdate = true;
+    if (discInstanced.instanceColor) discInstanced.instanceColor.needsUpdate = true;
+
+    laneGroup.add(cableInstanced);
+    laneGroup.add(discInstanced);
     this.scene.add(laneGroup);
   }
 
@@ -386,16 +397,18 @@ export class PoolEnvironment {
     });
   }
 
-  // 투명 수중 틴트와 물리 굴절/반사를 담은 차세대 리얼 수면 (Realistic PBR Water Surface)
+  // 투명 수중 틴트와 물리 굴절/반사를 담은 차세대 리얼 수면 (모바일 GPU 2-Pass 굴절 병목 및 정점 수 최적화)
   createRealisticWater() {
-    const waterGeo = new THREE.PlaneGeometry(this.poolWidth, this.poolLength, 80, 160);
+    const segW = this.isMobile ? 40 : 80;
+    const segL = this.isMobile ? 80 : 160;
+    const waterGeo = new THREE.PlaneGeometry(this.poolWidth, this.poolLength, segW, segL);
 
-    // 올림픽 규격 맑은 수영장 물 PBR 셰이더
+    // 모바일에서는 2-Pass 렌더 타겟을 요구하는 transmission 대신 고투명 단일 패스 PBR 적용
     this.waterMaterial = new THREE.MeshPhysicalMaterial({
       color: 0x38bdf8,
       emissive: 0x012b48,
-      transmission: 0.85, // 맑고 투명한 수중 광학
-      opacity: 0.94,
+      transmission: this.isMobile ? 0.0 : 0.85,
+      opacity: this.isMobile ? 0.62 : 0.94,
       transparent: true,
       roughness: 0.025,   // 매끄러운 수면 반사
       metalness: 0.05,
@@ -565,12 +578,13 @@ export class PoolEnvironment {
     const ambientLight = new THREE.AmbientLight(0xdbeafe, 0.75);
     this.scene.add(ambientLight);
 
-    // 2. 메인 천장 아레나 주 투광등 (소프트 섀도우)
+    // 2. 메인 천장 아레나 주 투광등 (소프트 섀도우 - 모바일 그림자 해상도 최적화)
     const mainSun = new THREE.DirectionalLight(0xffffff, 1.6);
     mainSun.position.set(16, 26, 25);
     mainSun.castShadow = true;
-    mainSun.shadow.mapSize.width = 2048;
-    mainSun.shadow.mapSize.height = 2048;
+    const shadowSize = this.isMobile ? 1024 : 2048;
+    mainSun.shadow.mapSize.width = shadowSize;
+    mainSun.shadow.mapSize.height = shadowSize;
     mainSun.shadow.camera.near = 0.5;
     mainSun.shadow.camera.far = 90;
     mainSun.shadow.camera.left = -26;
@@ -585,27 +599,33 @@ export class PoolEnvironment {
     rimLight.position.set(-18, 18, 55);
     this.scene.add(rimLight);
 
-    // 4. 경기장 4대 코너 올림픽 메가 스포트라이트 (4 Mega Corner Stadium Towers)
-    const corners = [
-      { x: -16, y: 19, z: 2 },
-      { x: 16, y: 19, z: 2 },
-      { x: -16, y: 19, z: 48 },
-      { x: 16, y: 19, z: 48 }
-    ];
+    // 4. 경기장 코너 올림픽 메가 스포트라이트 (모바일에서는 프래그먼트 셰이더 부하 감소를 위해 핵심 2기로 압축)
+    const corners = this.isMobile
+      ? [
+          { x: 16, y: 19, z: 12 },
+          { x: -16, y: 19, z: 38 }
+        ]
+      : [
+          { x: -16, y: 19, z: 2 },
+          { x: 16, y: 19, z: 2 },
+          { x: -16, y: 19, z: 48 },
+          { x: 16, y: 19, z: 48 }
+        ];
     const targetObj = new THREE.Object3D();
     targetObj.position.set(0, 0, 25);
     this.scene.add(targetObj);
 
     corners.forEach(pos => {
-      const spot = new THREE.SpotLight(0xfffbeb, 1.4, 75, Math.PI / 4.5, 0.45, 1.2);
+      const spot = new THREE.SpotLight(0xfffbeb, this.isMobile ? 1.8 : 1.4, 75, Math.PI / 4.5, 0.45, 1.2);
       spot.position.set(pos.x, pos.y, pos.z);
       spot.target = targetObj;
       this.scene.add(spot);
     });
 
     // 5. 수중 아쿠아 LED 램프 (Underwater Blue Illuminators)
-    for (let z of [6, 16, 26, 36, 46]) {
-      const uLight = new THREE.PointLight(0x0284c7, 1.8, 14);
+    const underwaterZ = this.isMobile ? [10, 25, 40] : [6, 16, 26, 36, 46];
+    for (let z of underwaterZ) {
+      const uLight = new THREE.PointLight(0x0284c7, this.isMobile ? 2.2 : 1.8, this.isMobile ? 20 : 14);
       uLight.position.set(0, -1.3, z);
       this.scene.add(uLight);
     }

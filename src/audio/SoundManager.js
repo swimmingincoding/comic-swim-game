@@ -24,13 +24,30 @@ class SoundManager {
 
   toggleMute() {
     this.isMuted = !this.isMuted;
-    if (this.ambientGain) {
-      this.ambientGain.gain.setValueAtTime(this.isMuted ? 0 : 0.25, this.ctx.currentTime);
-    }
-    if (this.waterGain) {
-      this.waterGain.gain.setValueAtTime(this.isMuted ? 0 : 0.15, this.ctx.currentTime);
+    if (this.ctx) {
+      if (this.ambientGain) {
+        this.ambientGain.gain.setValueAtTime(this.isMuted ? 0 : 0.25, this.ctx.currentTime);
+      }
+      if (this.waterGain) {
+        this.waterGain.gain.setValueAtTime(this.isMuted ? 0 : 0.15, this.ctx.currentTime);
+      }
+      if (this.raceAmbientGain) {
+        this.raceAmbientGain.gain.setValueAtTime(this.isMuted ? 0 : 0.18, this.ctx.currentTime);
+      }
     }
     return this.isMuted;
+  }
+
+  suspend() {
+    if (this.ctx && this.ctx.state === "running") {
+      this.ctx.suspend().catch(() => {});
+    }
+  }
+
+  resume() {
+    if (this.ctx && this.ctx.state === "suspended" && !this.isMuted) {
+      this.ctx.resume().catch(() => {});
+    }
   }
 
   // 올림픽 공식 호각 시퀀스: 짧은 호각 4회 후 긴 호각 1회 (스타트대 위로 올라서라는 신호)
